@@ -33,6 +33,25 @@
             pointer-events: none;
             z-index: 100;
         }
+        #blueprint-hud {
+    position: fixed;
+    right: -360px;
+    top: 40%;
+    width: 340px;
+    padding: 20px;
+    background: rgba(0, 10, 10, 0.95);
+    border: 3px solid #00ffff;
+    color: #00ffff;
+    font-size: 18px;
+    box-shadow: 0 0 30px rgba(0,255,255,0.5);
+    transition: right 0.5s ease;
+    z-index: 200;
+}
+
+#blueprint-hud.show {
+    right: 20px;
+}
+
         #hotbar {
             position: absolute;
             bottom: 30px;
@@ -223,6 +242,69 @@
             margin-bottom: 20px;
             text-shadow: 0 0 20px #00ffff;
         }
+        /* ===== FABRICATOR UI ===== */
+#fabricator-ui {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 420px;
+    background: rgba(0, 10, 10, 0.95);
+    border: 3px solid #00ffff;
+    box-shadow: 0 0 40px rgba(0,255,255,0.4);
+    display: none;
+    pointer-events: auto;
+    z-index: 300;
+}
+
+#fabricator-header {
+    padding: 12px;
+    text-align: center;
+    color: #00ffff;
+    font-size: 22px;
+    border-bottom: 2px solid #00ffff;
+}
+
+#fabricator-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding: 16px;
+}
+
+.fabricator-item {
+    height: 80px;
+    background: rgba(0, 20, 20, 0.9);
+    border: 2px solid #00ffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #00ff88;
+    cursor: pointer;
+    position: relative;
+}
+
+.fabricator-item:hover {
+    box-shadow: 0 0 15px #00ff88;
+}
+
+.fabricator-tooltip {
+    position: absolute;
+    bottom: 110%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: black;
+    border: 1px solid #00ffff;
+    padding: 6px 10px;
+    font-size: 12px;
+    white-space: nowrap;
+    display: none;
+}
+
+.fabricator-item:hover .fabricator-tooltip {
+    display: block;
+}
+
     </style>
 </head>
 <body>
@@ -237,6 +319,10 @@
     <div class="hud">
         <div class="chip-counter">
     CHIPS: <span id="chip-count">0</span>
+</div>
+<div id="fabricator-ui">
+    <div id="fabricator-header">FABRICATOR</div>
+    <div id="fabricator-grid"></div>
 </div>
 
         <div class="fragment-counter">
@@ -257,6 +343,7 @@
         <div class="crosshair"></div>
         <div class="scanner-indicator" id="scanner-indicator"></div>
         <div class="notification" id="notification"></div>
+        <div id="blueprint-hud"></div>
         <div class="portal-message" id="portal-message">
             Press E to enter the Portal
         </div>
@@ -288,6 +375,7 @@
             heldItem: null,
             hotbar: new Array(9).fill(null),
             selectedSlot: 0,
+            isFabricatorOpen: false,
 
 
         };
@@ -356,6 +444,7 @@
             createCreatures();
             createPowerGenerator();
             createPortal();
+            createFabricator();
 
 
             // Event Listeners
@@ -373,6 +462,73 @@
                 });
             }, 1500);
         }
+
+        let fabricator;
+
+function createFabricator() {
+    const geo = new THREE.BoxGeometry(2, 1.5, 1);
+    const mat = new THREE.MeshPhongMaterial({
+        color: 0x001a1a,
+        emissive: 0x003333
+    });
+
+    fabricator = new THREE.Mesh(geo, mat);
+    fabricator.position.set(0, 0.75, 3);
+    fabricator.userData.type = 'fabricator';
+
+    scene.add(fabricator);
+}
+function openFabricatorIfLooking() {
+    if (gameState.isFabricatorOpen) return true;
+
+    raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
+    const hits = raycaster.intersectObject(fabricator);
+
+    if (!hits.length) return false;
+
+    document.getElementById('fabricator-ui').style.display = 'block';
+    document.exitPointerLock();
+    populateFabricator();
+
+    gameState.isFabricatorOpen = true;
+    return true;
+}
+
+function closeFabricator() {
+    const ui = document.getElementById('fabricator-ui');
+    ui.style.display = 'none';
+    gameState.isFabricatorOpen = false;
+
+    // Lock mouse again
+    document.body.requestPointerLock();
+}
+
+function populateFabricator() {
+    const grid = document.getElementById('fabricator-grid');
+    grid.innerHTML = '';
+
+    const recipes = [];
+
+    if (gameState.scannerUnlocked)
+        recipes.push({ name: 'Scanner', cost: '20 Chips' });
+
+    if (gameState.generatorBlueprintUnlocked)
+        recipes.push({ name: 'Power Generator', cost: '1 Chip' });
+
+    recipes.forEach(item => {
+        const el = document.createElement('div');
+        el.className = 'fabricator-item';
+        el.textContent = item.name;
+
+        const tip = document.createElement('div');
+        tip.className = 'fabricator-tooltip';
+        tip.textContent = item.cost;
+        el.appendChild(tip);
+
+        grid.appendChild(el);
+    });
+}
+
 function createHeldScanner() {
     const geo = new THREE.BoxGeometry(0.2, 0.1, 0.4);
     const mat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
@@ -465,6 +621,15 @@ function spawnPlatformContent(x, y, z) {
             fragments.length
         );
     }
+    // Creature spawn (rare)
+if (Math.random() < 0.15) {
+    createCreature(
+        x + (Math.random() - 0.5) * 6,
+        y + 0.5,
+        z + (Math.random() - 0.5) * 6
+    );
+}
+
 }
 
             // Builds Platforms
@@ -899,6 +1064,10 @@ generatorSocket.userData.type = 'generatorSocket';
             // Keyboard
             document.addEventListener('keydown', (e) => {
                 gameState.keys[e.key.toLowerCase()] = true;
+                if (gameState.isFabricatorOpen && (e.key === 'f' || e.key.toLowerCase() === 'e')) {
+    closeFabricator();
+    return;
+}
                 // Hotbar selection (1–9)
 if (e.key >= '1' && e.key <= '9') {
     gameState.selectedSlot = parseInt(e.key) - 1;
@@ -935,24 +1104,30 @@ if (e.key >= '1' && e.key <= '9') {
                 renderer.setSize(window.innerWidth, window.innerHeight);
             });
         }
-        document.addEventListener('mousedown', (e) => {
+       document.addEventListener('mousedown', (e) => {
     if (document.pointerLockElement !== document.body) return;
 
-    // LEFT CLICK — collect chip
+    // LEFT CLICK
     if (e.button === 0) {
         tryCollectChip();
     }
 
-    // RIGHT CLICK — scan (scanner required)
+    // RIGHT CLICK
     if (e.button === 2) {
+        // FIRST: fabricator
+        if (openFabricatorIfLooking()) return;
+
+        // THEN: scanner actions
         if (!gameState.scannerCrafted) {
             showNotification('Scanner not crafted');
             return;
         }
+
         tryScanFragment();
         tryScanCreature();
     }
 });
+
 
 
 // Disable context menu
@@ -1159,33 +1334,49 @@ if (
 
 }
 
-            
-
-    
-        
         function scanFragment(fragment) {
-            fragment.userData.scanned = true;
-            gameState.fragmentsScanned++;
-            
-            // Visual feedback
-            fragment.material.opacity = 0.8;
-            fragment.material.color.setHex(0x00ff88);
-            
-            document.getElementById('fragment-count').textContent = gameState.fragmentsScanned;
-            showNotification('Fragment Scanned: Data Retrieved');
+    // Safety: prevent double scanning
+    if (fragment.userData.scanned) return;
 
-            // Scanner animation
-            const scanner = document.getElementById('scanner-indicator');
-            scanner.classList.add('active');
-            setTimeout(() => scanner.classList.remove('active'), 1000);
+    fragment.userData.scanned = true;
+    gameState.fragmentsScanned++;
 
-            // Check if all fragments scanned
-           if (gameState.fragmentsScanned >= gameState.totalFragments) {
-    gameState.generatorBlueprintUnlocked = true;
-    showNotification('Power Generator Blueprint Unlocked');
+    // ===== VISUAL FEEDBACK =====
+    fragment.material.opacity = 0.85;
+    fragment.material.color.setHex(0x00ff88);
+
+    // ===== HUD UPDATE =====
+    document.getElementById('fragment-count').textContent =
+        gameState.fragmentsScanned;
+
+    showNotification('Fragment Scanned: Data Retrieved');
+
+    showBlueprintHUD(
+        `${gameState.fragmentsScanned}/${gameState.totalFragments} Data Fragments Scanned`
+    );
+
+    // ===== SCANNER ANIMATION =====
+    const scanner = document.getElementById('scanner-indicator');
+    scanner.classList.add('active');
+    setTimeout(() => {
+        scanner.classList.remove('active');
+    }, 900);
+
+    // ===== BLUEPRINT UNLOCK CHECK =====
+    if (
+        gameState.fragmentsScanned >= gameState.totalFragments &&
+        !gameState.generatorBlueprintUnlocked
+    ) {
+        gameState.generatorBlueprintUnlocked = true;
+
+        showBlueprintHUD(
+            `${gameState.totalFragments}/${gameState.totalFragments} Data Fragments Scanned. Blueprint Unlocked: Power Generator`
+        );
+
+        showNotification('Power Generator Blueprint Unlocked');
+    }
 }
 
-}
 
         function activatePowerGenerator() {
 
@@ -1246,17 +1437,18 @@ function enterPortal() {
     // First chip discovery
 if (gameState.chips === 1 && !gameState.scannerUnlocked) {
     showNotification('New Blueprint Discovered: SCANNER');
+
 }
 
-// Unlock scanner blueprint
 if (
     gameState.chips >= 20 &&
     !gameState.scannerUnlocked &&
     !gameState.scannerCrafted
 ) {
     gameState.scannerUnlocked = true;
-    showNotification('Scanner Blueprint Ready. Craft it.');
+    showBlueprintHUD('Blueprint Unlocked for Scanner');
 }
+
 
 
     // Chip collection animation
@@ -1398,6 +1590,16 @@ camera.position.y = PLAYER_HEIGHT - (isSneaking ? SNEAK_CAMERA_OFFSET : 0);
                 notification.classList.remove('show');
             }, 3000);
         }
+        function showBlueprintHUD(text) {
+    const hud = document.getElementById('blueprint-hud');
+    hud.textContent = text;
+    hud.classList.add('show');
+
+    setTimeout(() => {
+        hud.classList.remove('show');
+    }, 2000);
+}
+
     function updateHeldItemFromHotbar() {
     gameState.heldItem = gameState.hotbar[gameState.selectedSlot];
 
