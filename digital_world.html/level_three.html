@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital World - Level 3</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .hud {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .resource-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 20px;
+            background: rgba(0, 20, 20, 0.95);
+            border: 2px solid #00ffff;
+            border-radius: 8px;
+            min-width: 250px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.4);
+        }
+
+        .resource-item {
+            color: #00ffff;
+            font-size: 16px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .resource-item .value {
+            color: #00ff88;
+            font-weight: bold;
+            margin-left: 15px;
+        }
+
+        .resource-item.new {
+            color: #ffaa00;
+        }
+
+        .resource-item.new .value {
+            color: #ffcc44;
+        }
+
+        .health-bar {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 350px;
+        }
+
+        .health-container {
+            width: 100%;
+            height: 35px;
+            background: rgba(0, 20, 20, 0.95);
+            border: 2px solid #00ffff;
+            border-radius: 5px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .health-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #00ff88, #00ffff);
+            transition: width 0.3s;
+            box-shadow: 0 0 15px #00ff88;
+        }
+
+        .health-text {
+            text-align: center;
+            color: #00ffff;
+            font-size: 16px;
+            margin-top: 5px;
+            text-shadow: 0 0 10px #00ffff;
+        }
+
+        .tool-selector {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+        }
+
+        .tool-slot {
+            width: 70px;
+            height: 70px;
+            background: rgba(0, 20, 20, 0.95);
+            border: 2px solid #004444;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #00ffff;
+            font-size: 11px;
+            transition: all 0.3s;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+        }
+
+        .tool-slot.active {
+            border-color: #00ffff;
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.6);
+            background: rgba(0, 100, 100, 0.6);
+        }
+
+        .controls-hint {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 35px;
+            background: rgba(0, 20, 20, 0.9);
+            border: 2px solid #00ffff;
+            border-radius: 5px;
+            color: #00ffff;
+            font-size: 14px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 24px;
+            height: 24px;
+        }
+
+        .crosshair::before,
+        .crosshair::after {
+            content: '';
+            position: absolute;
+            background: #00ffff;
+            box-shadow: 0 0 8px #00ffff;
+        }
+
+        .crosshair::before {
+            width: 2px;
+            height: 12px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .crosshair::after {
+            width: 12px;
+            height: 2px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .notification {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 25px 50px;
+            background: rgba(0, 100, 100, 0.98);
+            border: 3px solid #00ffff;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 22px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.8);
+            text-align: center;
+            max-width: 500px;
+        }
+
+        .notification.show {
+            opacity: 1;
+        }
+
+        .warning {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 30px;
+            background: rgba(100, 50, 0, 0.95);
+            border: 3px solid #ffaa00;
+            border-radius: 8px;
+            color: #ffcc44;
+            font-size: 18px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            box-shadow: 0 0 30px rgba(255, 170, 0, 0.6);
+            text-shadow: 0 0 10px #ffaa00;
+        }
+
+        .warning.show {
+            opacity: 1;
+        }
+
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s;
+        }
+
+        #loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-text {
+            color: #00ffff;
+            font-size: 36px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px #00ffff;
+        }
+
+        .build-preview {
+            position: absolute;
+            bottom: 160px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 25px;
+            background: rgba(0, 50, 50, 0.95);
+            border: 2px solid #00ff88;
+            border-radius: 8px;
+            color: #00ff88;
+            font-size: 16px;
+            display: none;
+            box-shadow: 0 0 25px rgba(0, 255, 136, 0.5);
+        }
+
+        .build-preview.active {
+            display: block;
+        }
+
+        .hunger-bar {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 250px;
+        }
+
+        .hunger-container {
+            width: 100%;
+            height: 20px;
+            background: rgba(0, 20, 20, 0.9);
+            border: 2px solid #ffaa00;
+            border-radius: 5px;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(255, 170, 0, 0.3);
+        }
+
+        .hunger-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #ffaa00, #ffcc44);
+            transition: width 0.3s;
+            box-shadow: 0 0 10px #ffaa00;
+        }
+
+        .hunger-text {
+            text-align: center;
+            color: #ffaa00;
+            font-size: 12px;
+            margin-top: 3px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="loading-screen">
+        <div class="loading-text">Level 3</div>
+    </div>
+
+    <div class="hud">
+        <div class="health-bar">
+            <div class="health-container">
+                <div class="health-fill" id="health-fill"></div>
+            </div>
+            <div class="health-text">HEALTH: <span id="health-value">100</span>/100</div>
+        </div>
+
+        <div class="hunger-bar">
+            <div class="hunger-container">
+                <div class="hunger-fill" id="hunger-fill"></div>
+            </div>
+            <div class="hunger-text">ENERGY: <span id="hunger-value">100</span>%</div>
+        </div>
+
+        <div class="resource-panel">
+            <div class="resource-item">
+                <span>CHIPS:</span>
+                <span class="value" id="chip-count">0</span>
+            </div>
+            <div class="resource-item">
+                <span>LOGIC CHIPS:</span>
+                <span class="value" id="logic-chip-count">0</span>
+            </div>
+            <div class="resource-item new">
+                <span>WOOD:</span>
+                <span class="value" id="wood-count">0</span>
+            </div>
+            <div class="resource-item new">
+                <span>FRUIT:</span>
+                <span class="value" id="fruit-count">0</span>
+            </div>
+            <div class="resource-item">
+                <span>FRAGMENTS:</span>
+                <span class="value" id="fragment-count">0/10</span>
+            </div>
+        </div>
+
+        <div class="tool-selector">
+            <div class="tool-slot active" data-tool="scanner">
+                <div>SCAN</div>
+                <div>(E)</div>
+            </div>
+            <div class="tool-slot" data-tool="constructor">
+                <div>BUILD</div>
+                <div>(B)</div>
+            </div>
+            <div class="tool-slot" data-tool="laser">
+                <div>LASER</div>
+                <div>(1)</div>
+            </div>
+            <div class="tool-slot" data-tool="puncher">
+                <div>PUNCH</div>
+                <div>(2)</div>
+            </div>
+        </div>
+
+        <div class="build-preview" id="build-preview">
+            Press LEFT CLICK to place (Cost: 10 Chips)
+        </div>
+
+        <div class="controls-hint">
+            WASD: Move | SPACE: Jump | E: Interact | B: Build | 1: Laser | 2: Puncher | F: Eat Fruit
+        </div>
+        <div class="crosshair"></div>
+        <div class="notification" id="notification"></div>
+        <div class="warning" id="warning"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        const gameState = {
+            chips: 0,
+            logicChips: 0,
+            wood: 0,
+            fruit: 0,
+            fragmentsScanned: 0,
+            totalFragments: 10,
+            health: 100,
+            maxHealth: 100,
+            hunger: 100,
+            maxHunger: 100,
+            portalActive: false,
+            canEnterPortal: false,
+            currentTool: 'scanner',
+            buildMode: false,
+            keys: {},
+            mouseMovement: { x: 0, y: 0 },
+            velocity: new THREE.Vector3(),
+            isJumping: false,
+            powerGeneratorActivated: false
+        };
+
+        let scene, camera, renderer, player;
+        let platforms = [], hills = [], trees = [], chips = [], logicChips = [], fragments = [], enemies = [], fruits = [];
+        let powerGenerator, portal;
+        let raycaster, clock = new THREE.Clock();
+        let buildPreview = null;
+
+        const GRAVITY = -20, JUMP_FORCE = 8, MOVE_SPEED = 5, PLAYER_HEIGHT = 1.8;
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.fog = new THREE.Fog(0x000000, 30, 120);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            player = new THREE.Object3D();
+            player.position.set(0, 5, 0);
+            player.add(camera);
+            camera.position.y = PLAYER_HEIGHT;
+            scene.add(player);
+
+            renderer = new THREE.WebGLRenderer({ 
+                canvas: document.getElementById('gameCanvas'),
+                antialias: true 
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x000000);
+
+            raycaster = new THREE.Raycaster();
+
+            // Lighting with warm accents
+            scene.add(new THREE.AmbientLight(0x404040, 0.8));
+            
+            const mainLight = new THREE.PointLight(0x00ffff, 0.7, 80);
+            mainLight.position.set(0, 20, 0);
+            scene.add(mainLight);
+
+            const warmLight1 = new THREE.PointLight(0xffaa00, 0.4, 60);
+            warmLight1.position.set(20, 15, 20);
+            scene.add(warmLight1);
+
+            const warmLight2 = new THREE.PointLight(0xffcc44, 0.3, 60);
+            warmLight2.position.set(-20, 15, -20);
+            scene.add(warmLight2);
+
+            createWorld();
+            loadProgress();
+            setupEventListeners();
+            animate();
+
+            setTimeout(() => {
+                document.getElementById('loading-screen').classList.add('hidden');
+                document.body.addEventListener('click', () => document.body.requestPointerLock());
+                showNotification('Level 3: Construct Phase Active');
+            }, 2000);
+        }
+
+        function loadProgress() {
+            const worldData = JSON.parse(sessionStorage.getItem('currentWorld') || '{}');
+            if (worldData.chips) gameState.chips = worldData.chips;
+            if (worldData.logicChips) gameState.logicChips = worldData.logicChips;
+            document.getElementById('chip-count').textContent = gameState.chips;
+            document.getElementById('logic-chip-count').textContent = gameState.logicChips;
+        }
+
+        function createWorld() {
+            createTerrain();
+            createPlatforms();
+            createTrees();
+            createChips();
+            createLogicChips();
+            createFragments();
+            createEnemies();
+            createPowerGenerator();
+            createPortal();
+        }
+
+        function createTerrain() {
+            const hillConfigs = [
+                { x: 15, z: 15, height: 3, size: 8 },
+                { x: -20, z: -15, height: 4, size: 10 },
+                { x: 25, z: -20, height: 3.5, size: 9 },
+                { x: -15, z: 20, height: 2.5, size: 7 },
+                { x: 30, z: 10, height: 5, size: 12 },
+            ];
+
+            hillConfigs.forEach(config => {
+                const geometry = new THREE.ConeGeometry(config.size, config.height, 6);
+                const material = new THREE.MeshStandardMaterial({ 
+                    color: 0x1a1a1a,
+                    flatShading: true
+                });
+                const hill = new THREE.Mesh(geometry, material);
+                hill.position.set(config.x, config.height / 2, config.z);
+                scene.add(hill);
+
+                const edges = new THREE.EdgesGeometry(geometry);
+                const edgeMaterial = new THREE.LineBasicMaterial({ 
+                    color: Math.random() > 0.7 ? 0xffaa00 : 0x00ffff
+                });
+                const edgeLines = new THREE.LineSegments(edges, edgeMaterial);
+                edgeLines.position.copy(hill.position);
+                scene.add(edgeLines);
+
+                hills.push({ mesh: hill, edges: edgeLines });
+            });
+        }
+
+        function createPlatforms() {
+            const configs = [
+                { x: 0, y: 0, z: 0, w: 25, d: 25 },
+                { x: 28, y: 1, z: 0, w: 15, d: 15 },
+                { x: -28, y: 1.5, z: 0, w: 15, d: 15 },
+                { x: 0, y: 0.5, z: 28, w: 15, d: 15 },
+                { x: 0, y: 1, z: -28, w: 15, d: 15 },
+            ];
+
+            configs.forEach(c => {
+                const geom = new THREE.BoxGeometry(c.w, 0.3, c.d);
+                const mat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a });
+                const plat = new THREE.Mesh(geom, mat);
+                plat.position.set(c.x, c.y, c.z);
+                scene.add(plat);
+
+                const edgeColor = Math.random() > 0.6 ? 0x00ffcc : 0x00ffff;
+                const edges = new THREE.EdgesGeometry(geom);
+                const edgeMat = new THREE.LineBasicMaterial({ color: edgeColor });
+                const edgeLines = new THREE.LineSegments(edges, edgeMat);
+                edgeLines.position.set(c.x, c.y + 0.16, c.z);
+                scene.add(edgeLines);
+
+                platforms.push({ mesh: plat, edges: edgeLines });
+            });
+        }
+
+        function createTrees() {
+            const positions = [
+                { x: 8, z: 8 }, { x: -12, z: 10 }, { x: 18, z: -15 },
+                { x: -18, z: -12 }, { x: 25, z: 5 }, { x: -22, z: -8 }
+            ];
+
+            positions.forEach(pos => {
+                const tree = new THREE.Group();
+                const y = getGroundHeight(pos.x, pos.z);
+
+                // Trunk
+                const trunk = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.3, 0.4, 3, 6),
+                    new THREE.MeshStandardMaterial({ color: 0x2a2a2a, flatShading: true })
+                );
+                trunk.position.y = 1.5;
+                tree.add(trunk);
+
+                // Branches
+                for (let i = 0; i < 5; i++) {
+                    const angle = (Math.PI * 2 / 5) * i;
+                    const branch = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.15, 0.8, 0.15),
+                        new THREE.MeshStandardMaterial({ color: 0x2a2a2a })
+                    );
+                    branch.position.set(Math.cos(angle) * 0.5, 2.5, Math.sin(angle) * 0.5);
+
+                    // Fruit
+                    if (Math.random() > 0.4) {
+                        const fruit = new THREE.Mesh(
+                            new THREE.SphereGeometry(0.15, 8, 8),
+                            new THREE.MeshStandardMaterial({ 
+                                color: 0xff6644,
+                                emissive: 0xff3322,
+                                emissiveIntensity: 0.4
+                            })
+                        );
+                        fruit.position.copy(branch.position);
+                        fruit.position.y += 0.5;
+                        fruit.userData = { type: 'fruit', baseY: fruit.position.y };
+                        tree.add(fruit);
+                        fruits.push(fruit);
+                    }
+                    
+                    tree.add(branch);
+                }
+
+                tree.position.set(pos.x, y, pos.z);
+                tree.userData = { type: 'tree', canHarvest: true };
+                scene.add(tree);
+                trees.push(tree);
+            });
+        }
+
+        function createChips() {
+            for (let i = 0; i < 15; i++) {
+                const angle = (Math.PI * 2 / 15) * i;
+                const radius = 10 + Math.random() * 15;
+                const x = Math.cos(angle) * radius;
+                const z = Math.sin(angle) * radius;
+                const y = getGroundHeight(x, z) + 1.5;
+                
+                const chip = new THREE.Mesh(
+                    new THREE.OctahedronGeometry(0.3),
+                    new THREE.MeshPhongMaterial({ 
+                        color: 0x00ff88,
+                        transparent: true,
+                        opacity: 0.6,
+                        emissive: 0x00ff88
+                    })
+                );
+                chip.position.set(x, y, z);
+                chip.userData = { type: 'chip', baseY: y, rotation: 0.02 };
+                scene.add(chip);
+                chips.push(chip);
+            }
+        }
+
+        function createLogicChips() {
+            const positions = [
+                { x: 20, z: 20 }, { x: -25, z: -20 }, { x: 28, z: -10 }
+            ];
+
+            positions.forEach(pos => {
+                const y = getGroundHeight(pos.x, pos.z) + 2;
+                const chip = new THREE.Mesh(
+                    new THREE.OctahedronGeometry(0.35),
+                    new THREE.MeshPhongMaterial({ 
+                        color: 0x00ff88,
+                        emissive: 0x00ff88,
+                        transparent: true,
+                        opacity: 0.7
+                    })
+                );
+                chip.position.set(pos.x, y, pos.z);
+                chip.userData = { type: 'logicChip', baseY: y, rotation: 0.03 };
+                scene.add(chip);
+                logicChips.push(chip);
+            });
+        }
+
+        function createFragments() {
+            for (let i = 0; i < 10; i++) {
+                const angle = (Math.PI * 2 / 10) * i;
+                const radius = 20 + Math.random() * 10;
+                const x = Math.cos(angle) * radius;
+                const z = Math.sin(angle) * radius;
+                const y = getGroundHeight(x, z) + 1.5;
+                
+                const frag = new THREE.Mesh(
+                    new THREE.IcosahedronGeometry(0.5),
+                    new THREE.MeshBasicMaterial({ 
+                        color: 0x00ffff,
+                        transparent: true,
+                        opacity: 0.4,
+                        wireframe: true
+                    })
+                );
+                frag.position.set(x, y, z);
+                frag.userData = { type: 'fragment', id: i, scanned: false, rotation: 0.03 };
+                scene.add(frag);
+                fragments.push(frag);
+            }
+        }
+
+        function createEnemies() {
+            for (let i = 0; i < 8; i++) {
+                const angle = (Math.PI * 2 / 8) * i;
+                const radius = 15 + Math.random() * 15;
+                const x = Math.cos(angle) * radius;
+                const z = Math.sin(angle) * radius;
+                const y = getGroundHeight(x, z) + 0.8;
+
+                const enemy = new THREE.Group();
+                const body = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.9, 0.45, 1.1),
+                    new THREE.MeshPhongMaterial({ color: 0x880000, flatShading: true })
+                );
+                body.position.y = 0.4;
+                enemy.add(body);
+
+                enemy.position.set(x, y, z);
+                enemy.userData = {
+                    type: 'enemy',
+                    health: 40,
+                    moveSpeed: 2,
+                    attackRange: 2.5,
+                    attackCooldown: 0,
+                    detectionRange: 20
+                };
+                scene.add(enemy);
+                enemies.push(enemy);
+            }
+        }
+
+        function createPowerGenerator() {
+            powerGenerator = new THREE.Mesh(
+                new THREE.BoxGeometry(2, 2, 2),
+                new THREE.MeshPhongMaterial({ 
+                    color: 0x1a1a1a,
+                    emissive: 0x005555
+                })
+            );
+            powerGenerator.position.set(-10, 2, -10);
+            powerGenerator.userData = { type: 'powerGenerator', activated: false };
+            scene.add(powerGenerator);
+        }
+
+        function createPortal() {
+            portal = new THREE.Group();
+            const portalMesh = new THREE.Mesh(
+                new THREE.CylinderGeometry(3, 3, 0.5, 6),
+                new THREE.MeshPhongMaterial({ 
+                    color: 0x004444,
+                    emissive: 0x00ffff,
+                    transparent: true,
+                    opacity: 0.8
+                })
+            );
+            portalMesh.rotation.x = Math.PI / 2;
+            portal.add(portalMesh);
+            portal.position.set(0, 0.5, -50);
+            portal.userData = { type: 'portal', active: false };
+            scene.add(portal);
+        }
+
+        function setupEventListeners() {
+            document.addEventListener('keydown', (e) => {
+                gameState.keys[e.key.toLowerCase()] = true;
+                
+                if (e.key.toLowerCase() === 'e') handleInteraction();
+                if (e.key === ' ' && !gameState.isJumping) {
+                    gameState.velocity.y = JUMP_FORCE;
+                    gameState.isJumping = true;
+                }
+                if (e.key.toLowerCase() === 'b') toggleBuildMode();
+                if (e.key === '1') gameState.currentTool = 'laser';
+                if (e.key.toLowerCase() === 'f') eatFruit();
+            });
+
+            document.addEventListener('keyup', (e) => {
+                gameState.keys[e.key.toLowerCase()] = false;
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (document.pointerLockElement === document.body) {
+                    gameState.mouseMovement.x += e.movementX;
+                    gameState.mouseMovement.y += e.movementY;
+                }
+            });
+
+            document.addEventListener('mousedown', (e) => {
+                if (e.button === 0 && gameState.buildMode) placeBuild();
+            });
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        function toggleBuildMode() {
+            gameState.buildMode = !gameState.buildMode;
+            document.getElementById('build-preview').classList.toggle('active', gameState.buildMode);
+            
+            if (gameState.buildMode) {
+                if (buildPreview) scene.remove(buildPreview);
+                buildPreview = new THREE.Mesh(
+                    new THREE.BoxGeometry(5, 0.3, 5),
+                    new THREE.MeshBasicMaterial({ 
+                        color: 0x00ff88,
+                        transparent: true,
+                        opacity: 0.3,
+                        wireframe: true
+                    })
+                );
+                scene.add(buildPreview);
+            } else if (buildPreview) {
+                scene.remove(buildPreview);
+                buildPreview = null;
+            }
+        }
+
+        function updateBuildPreview() {
+            if (!buildPreview || !gameState.buildMode) return;
+
+            raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+            const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+            const intersectPoint = new THREE.Vector3();
+            raycaster.ray.intersectPlane(groundPlane, intersectPoint);
+
+            if (intersectPoint && intersectPoint.distanceTo(player.position) < 15) {
+                buildPreview.position.copy(intersectPoint);
+                buildPreview.position.y = getGroundHeight(intersectPoint.x, intersectPoint.z) + 0.2;
+            }
+        }
+
+        function placeBuild() {
+            if (gameState.chips < 10) {
+                showNotification('Need 10 chips to build');
+                return;
+            }
+
+            if (buildPreview) {
+                const pos = buildPreview.position;
+                const geom = new THREE.BoxGeometry(5, 0.3, 5);
+                const mat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a });
+                const plat = new THREE.Mesh(geom, mat);
+                plat.position.copy(pos);
+                scene.add(plat);
+
+                gameState.chips -= 10;
+                document.getElementById('chip-count').textContent = gameState.chips;
+                showNotification('Platform built!');
+            }
+        }
+
+        function handleInteraction() {
+            raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+            
+            // Fragments
+            const fragIntersects = raycaster.intersectObjects(fragments);
+            if (fragIntersects.length > 0 && fragIntersects[0].distance < 5) {
+                const frag = fragIntersects[0].object;
+                if (!frag.userData.scanned) {
+                    frag.userData.scanned = true;
+                    gameState.fragmentsScanned++;
+                    frag.material.color.setHex(0x00ff88);
+                    document.getElementById('fragment-count').textContent = `${gameState.fragmentsScanned}/${gameState.totalFragments}`;
+                    showNotification('Fragment Scanned');
+                    return;
+                }
+            }
+
+            // Trees
+            trees.forEach(tree => {
+                if (player.position.distanceTo(tree.position) < 3 && tree.userData.canHarvest) {
+                    tree.userData.canHarvest = false;
+                    gameState.wood += 5;
+                    document.getElementById('wood-count').textContent = gameState.wood;
+                    
+                    const treeFruits = fruits.filter(f => tree.children.includes(f));
+                    gameState.fruit += treeFruits.length;
+                    document.getElementById('fruit-count').textContent = gameState.fruit;
+                    
+                    treeFruits.forEach(f => {
+                        tree.remove(f);
+                        fruits.splice(fruits.indexOf(f), 1);
+                    });
+                    
+                    showNotification(`Harvested: +5 Wood, +${treeFruits.length} Fruit`);
+                    setTimeout(() => tree.userData.canHarvest = true, 30000);
+                }
+            });
+
+            // Generator
+            if (powerGenerator && player.position.distanceTo(powerGenerator.position) < 4) {
+                if (gameState.fragmentsScanned >= gameState.totalFragments) {
+                    gameState.powerGeneratorActivated = true;
+                    gameState.portalActive = true;
+                    gameState.canEnterPortal = true;
+                    showNotification('Power Generator Activated - Portal Online');
+                } else {
+                    showNotification(`Need all ${gameState.totalFragments} fragments`);
+                }
+            }
+
+            // Portal
+            if (gameState.canEnterPortal && player.position.distanceTo(portal.position) < 5) {
+                const worldData = JSON.parse(sessionStorage.getItem('currentWorld'));
+                worldData.level = 4;
+                worldData.chips = gameState.chips;
+                worldData.logicChips = gameState.logicChips;
+                worldData.wood = gameState.wood;
+                sessionStorage.setItem('currentWorld', JSON.stringify(worldData));
+                
+                document.getElementById('loading-screen').classList.remove('hidden');
+                setTimeout(() => window.location.href = 'level4.html', 1000);
+            }
+        }
+
+        function eatFruit() {
+            if (gameState.fruit > 0 && gameState.hunger < 100) {
+                gameState.fruit--;
+                gameState.hunger = Math.min(100, gameState.hunger + 25);
+                document.getElementById('fruit-count').textContent = gameState.fruit;
+                updateHungerUI();
+                showNotification('Energy restored!');
+            }
+        }
+
+        function updatePlayer(delta) {
+            const rotationSpeed = 0.002;
+            player.rotation.y -= gameState.mouseMovement.x * rotationSpeed;
+            camera.rotation.x -= gameState.mouseMovement.y * rotationSpeed;
+            camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
+            gameState.mouseMovement.x = 0;
+            gameState.mouseMovement.y = 0;
+
+            const moveVector = new THREE.Vector3();
+            if (gameState.keys['w']) moveVector.z -= 1;
+            if (gameState.keys['s']) moveVector.z += 1;
+            if (gameState.keys['a']) moveVector.x -= 1;
+            if (gameState.keys['d']) moveVector.x += 1;
+
+            if (moveVector.length() > 0) {
+                moveVector.normalize();
+                moveVector.applyQuaternion(player.quaternion);
+                player.position.x += moveVector.x * MOVE_SPEED * delta;
+                player.position.z += moveVector.z * MOVE_SPEED * delta;
+                
+                gameState.hunger -= delta * 0.5;
+                gameState.hunger = Math.max(0, gameState.hunger);
+                updateHungerUI();
+            }
+
+            gameState.velocity.y += GRAVITY * delta;
+            player.position.y += gameState.velocity.y * delta;
+
+            const groundY = getGroundHeight(player.position.x, player.position.z);
+            if (player.position.y <= groundY) {
+                player.position.y = groundY;
+                gameState.velocity.y = 0;
+                gameState.isJumping = false;
+            }
+
+            chips.forEach(chip => {
+                if (player.position.distanceTo(chip.position) < 1.5) {
+                    gameState.chips++;
+                    document.getElementById('chip-count').textContent = gameState.chips;
+                    scene.remove(chip);
+                    chips.splice(chips.indexOf(chip), 1);
+                }
+            });
+
+            logicChips.forEach(chip => {
+                if (player.position.distanceTo(chip.position) < 1.5) {
+                    gameState.logicChips++;
+                    document.getElementById('logic-chip-count').textContent = gameState.logicChips;
+                    scene.remove(chip);
+                    logicChips.splice(logicChips.indexOf(chip), 1);
+                }
+            });
+
+            updateBuildPreview();
+        }
+
+        function getGroundHeight(x, z) {
+            let maxY = 0;
+            
+            platforms.forEach(p => {
+                const hw = p.mesh.geometry.parameters.width / 2;
+                const hd = p.mesh.geometry.parameters.depth / 2;
+                if (x >= p.mesh.position.x - hw && x <= p.mesh.position.x + hw &&
+                    z >= p.mesh.position.z - hd && z <= p.mesh.position.z + hd) {
+                    maxY = Math.max(maxY, p.mesh.position.y + 0.15);
+                }
+            });
+
+            hills.forEach(h => {
+                const dist = Math.sqrt((x - h.mesh.position.x) ** 2 + (z - h.mesh.position.z) ** 2);
+                const radius = h.mesh.geometry.parameters.radiusBottom;
+                if (dist < radius) {
+                    const height = h.mesh.geometry.parameters.height;
+                    maxY = Math.max(maxY, height * (1 - dist / radius));
+                }
+            });
+
+            return maxY;
+        }
+
+        function updateEnemies(delta) {
+            enemies.forEach(enemy => {
+                const dist = enemy.position.distanceTo(player.position);
+                if (dist < enemy.userData.detectionRange) {
+                    const dir = new THREE.Vector3()
+                        .subVectors(player.position, enemy.position)
+                        .normalize();
+                    dir.y = 0;
+                    enemy.position.add(dir.multiplyScalar(enemy.userData.moveSpeed * delta));
+                    enemy.rotation.y = Math.atan2(dir.x, dir.z);
+
+                    if (dist < enemy.userData.attackRange) {
+                        enemy.userData.attackCooldown -= delta;
+                        if (enemy.userData.attackCooldown <= 0) {
+                            gameState.health -= 15;
+                            gameState.health = Math.max(0, gameState.health);
+                            updateHealthUI();
+                            enemy.userData.attackCooldown = 1;
+                            if (gameState.health <= 0) {
+                                showNotification('SYSTEM FAILURE');
+                                setTimeout(() => location.reload(), 2000);
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateHealthUI() {
+            document.getElementById('health-fill').style.width = (gameState.health / 100 * 100) + '%';
+            document.getElementById('health-value').textContent = Math.floor(gameState.health);
+        }
+
+        function updateHungerUI() {
+            document.getElementById('hunger-fill').style.width = (gameState.hunger / 100 * 100) + '%';
+            document.getElementById('hunger-value').textContent = Math.floor(gameState.hunger);
+        }
+
+        function showNotification(msg) {
+            const notif = document.getElementById('notification');
+            notif.textContent = msg;
+            notif.classList.add('show');
+            setTimeout(() => notif.classList.remove('show'), 3000);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+
+            updatePlayer(delta);
+            updateEnemies(delta);
+
+            chips.forEach(c => {
+                c.rotation.y += c.userData.rotation;
+                c.position.y = c.userData.baseY + Math.sin(Date.now() * 0.001) * 0.1;
+            });
+
+            logicChips.forEach(c => {
+                c.rotation.y += c.userData.rotation;
+                c.position.y = c.userData.baseY + Math.sin(Date.now() * 0.0015) * 0.15;
+            });
+
+            fragments.forEach(f => f.rotation.y += f.userData.rotation);
+
+            if (gameState.portalActive) {
+                portal.rotation.y += 0.005;
+                powerGenerator.rotation.y += 0.01;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        init();
+    </script>
+</body>
+</html>

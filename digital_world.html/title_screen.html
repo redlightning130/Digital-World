@@ -1,0 +1,741 @@
+Title screen alpha: 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital World - Title Screen</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #canvas3d {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            z-index: 10;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* Loading Screen */
+        #loading-screen {
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: #000;
+        }
+
+        .studio-logo {
+            font-size: 48px;
+            font-weight: bold;
+            color: #00ffff;
+            text-shadow: 0 0 20px #00ffff;
+            margin-bottom: 40px;
+            letter-spacing: 8px;
+        }
+
+        .loading-bar-container {
+            width: 400px;
+            height: 30px;
+            background: #1a1a1a;
+            border: 2px solid #00ffff;
+            border-radius: 5px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .loading-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #2153a4, #006234);/*Colour transition in loading bar*/
+            transition: width 0.3s;
+            box-shadow: 0 0 20px #00ffff;
+        }
+
+        /* Title Screen */
+        #title-screen {
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .game-title {
+            font-size: 72px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 30px #00ffff;
+            margin-bottom: 60px;
+            letter-spacing: 12px;
+        }
+
+        .btn {
+            padding: 15px 60px;
+            font-size: 24px;
+            background: linear-gradient(135deg, #00ffff, #00ff88);
+            border: none;
+            border-radius: 5px;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.8);
+        }
+
+        /* World Selection Screen */
+        #world-selection {
+            flex-direction: column;
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .world-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .world-header h2 {
+            font-size: 36px;
+            color: #00ffff;
+            text-shadow: 0 0 20px #00ffff;
+        }
+
+        .world-list {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #00ffff;
+            border-radius: 5px;
+            padding: 20px;
+        }
+
+        .world-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: rgba(0, 100, 100, 0.3);
+            border: 2px solid #004444;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .world-item:hover {
+            background: rgba(0, 150, 150, 0.5);
+            border-color: #00ffff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .world-item.selected {
+            background: rgba(0, 200, 200, 0.5);
+            border-color: #00ffff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+
+        .world-thumbnail {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #001a1a, #003333);
+            border: 2px solid #00ffff;
+            border-radius: 5px;
+            margin-right: 20px;
+        }
+
+        .world-info {
+            flex: 1;
+        }
+
+        .world-name {
+            font-size: 20px;
+            color: #fff;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .world-details {
+            font-size: 14px;
+            color: #00ffff;
+        }
+
+        .world-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn-secondary {
+            padding: 12px 30px;
+            font-size: 18px;
+            background: linear-gradient(135deg, #004444, #006666);
+            border: 2px solid #00ffff;
+            border-radius: 5px;
+            color: #00ffff;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #006666, #008888);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+
+        .btn-secondary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Game Mode Selection */
+        #mode-selection {
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .mode-container {
+            display: flex;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .mode-card {
+            width: 300px;
+            padding: 30px;
+            background: rgba(0, 50, 50, 0.5);
+            border: 3px solid #004444;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .mode-card:hover {
+            border-color: #00ffff;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+            transform: translateY(-5px);
+        }
+
+        .mode-card.selected {
+            border-color: #00ffff;
+            background: rgba(0, 100, 100, 0.5);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.7);
+        }
+
+        .mode-title {
+            font-size: 32px;
+            color: #00ffff;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .mode-description {
+            font-size: 16px;
+            color: #88ffff;
+            line-height: 1.5;
+        }
+
+        /* Game Loading Screen */
+        #game-loading {
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: #000;
+        }
+
+        .loading-text {
+            font-size: 32px;
+            color: #00ffff;
+            text-shadow: 0 0 20px #00ffff;
+            margin-bottom: 30px;
+        }
+
+        .progress-container {
+            width: 500px;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 40px;
+            background: #1a1a1a;
+            border: 2px solid #00ffff;
+            border-radius: 5px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #00ffff, #00ff88);
+            transition: width 0.3s;
+            box-shadow: 0 0 20px #00ffff;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: #00ffff;
+            font-size: 18px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 3D Background Canvas -->
+    <canvas id="canvas3d"></canvas>
+
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="screen active">
+        <div class="studio-logo">AERA STUDIOS</div>
+        <div class="loading-bar-container">
+            <div class="loading-bar" id="initial-loading-bar"></div>
+        </div>
+    </div>
+
+    <!-- Title Screen -->
+    <div id="title-screen" class="screen">
+        <div class="game-title">DIGITAL WORLD</div>
+        <button class="btn" id="play-btn">PLAY</button>
+<button class="btn-secondary" id="options-btn" style="margin-top:20px;">OPTIONS</button>
+
+    </div>
+<div id="options-screen" class="screen">
+    <div class="world-header">
+        <h2>Options</h2>
+    </div>
+
+    <div style="color:#00ffff; font-size:20px; margin-bottom:20px;">
+        Render Distance
+    </div>
+
+    <input type="range" id="render-distance" min="20" max="200" value="50">
+
+    <div class="world-buttons" style="margin-top:40px;">
+        <button class="btn-secondary" id="options-back-btn">Back</button>
+    </div>
+</div>
+
+    <!-- World Selection Screen -->
+    <div id="world-selection" class="screen">
+        <div class="world-header">
+            <h2>Select World</h2>
+        </div>
+        <div class="world-list" id="world-list">
+            <!-- Worlds will be added here dynamically -->
+        </div>
+        <div class="world-buttons">
+            <button class="btn-secondary" id="play-world-btn" disabled>Play Selected World</button>
+            <button class="btn-secondary" id="create-world-btn">Create New World</button>
+            <button class="btn-secondary" id="edit-world-btn" disabled>Edit</button>
+            <button class="btn-secondary" id="delete-world-btn" disabled>Delete</button>
+            <button class="btn-secondary" id="back-to-title-btn">Back</button>
+        </div>
+    </div>
+
+    <!-- Game Mode Selection -->
+    <div id="mode-selection" class="screen">
+        <div class="world-header">
+            <h2>Select Game Mode</h2>
+        </div>
+        <div class="mode-container">
+            <div class="mode-card" data-mode="survival">
+                <div class="mode-title">SURVIVAL</div>
+                <div class="mode-description">
+                    Explore the Digital World, gather resources, and survive against corrupted entities.
+                </div>
+            </div>
+            <div class="mode-card" data-mode="hardcore">
+                <div class="mode-title">HARDCORE</div>
+                <div class="mode-description">
+                    One life. Permanent death. Face the ultimate challenge in the simulation.
+                </div>
+            </div>
+        </div>
+        <div class="world-buttons">
+            <button class="btn" id="create-world-confirm-btn" disabled>Create World</button>
+            <button class="btn-secondary" id="back-to-worlds-btn">Back</button>
+        </div>
+    </div>
+
+    <!-- Game Loading Screen -->
+    <div id="game-loading" class="screen">
+        <div class="loading-text">Initializing Simulation...</div>
+        <div class="progress-container">
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="game-loading-bar"></div>
+            </div>
+            <div class="progress-text" id="loading-progress-text">0%</div>
+        </div>
+    </div>
+
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // Game State
+        const gameState = {
+            worlds: JSON.parse(localStorage.getItem('digitalWorlds')) || [],
+            selectedWorld: null,
+            selectedMode: null
+        };
+
+        // Three.js Scene Setup
+        let scene, camera, renderer, platforms = [];
+        
+        function initThreeJS() {
+            scene = new THREE.Scene();
+            scene.fog = new THREE.Fog(0x000000, 10, 50);
+            
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 3, 8);
+            camera.lookAt(0, 0, 0);
+            
+            renderer = new THREE.WebGLRenderer({ 
+                canvas: document.getElementById('canvas3d'),
+                antialias: true 
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x000000);
+            
+            // Ambient Light
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+            scene.add(ambientLight);
+            
+            // Create Level 1 platforms
+            createLevel1Platforms();
+            
+            // Add some floating chips
+            createChips();
+            
+            animate();
+        }
+        
+        function createLevel1Platforms() {
+    const size = 4;       // grid radius
+    const spacing = 4;    // distance between platforms
+
+    const platformGeometry = new THREE.PlaneGeometry(3, 3);
+    const platformMaterial = new THREE.MeshBasicMaterial({
+        color: 0x1a1a1a,
+        side: THREE.DoubleSide
+    });
+
+    for (let x = -size; x <= size; x++) {
+        for (let z = -size; z <= size; z++) {
+            const platform = new THREE.Mesh(platformGeometry, platformMaterial);
+            platform.rotation.x = -Math.PI / 2;
+            platform.position.set(x * spacing, -1, z * spacing);
+
+            const edges = new THREE.LineSegments(
+                new THREE.EdgesGeometry(platformGeometry),
+                new THREE.LineBasicMaterial({ color: 0x00ffff })
+            );
+            edges.rotation.x = -Math.PI / 2;
+            edges.position.copy(platform.position);
+            edges.position.y += 0.01;
+
+            scene.add(platform);
+            scene.add(edges);
+            platforms.push({ platform, edges });
+        }
+    }
+}
+
+        
+        function createChips() {
+            const chipGeometry = new THREE.OctahedronGeometry(0.2, 0);
+            const chipMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0x00ff88,
+                transparent: true,
+                opacity: 0.7
+            });
+            
+            for (let i = 0; i < 8; i++) {
+                const chip = new THREE.Mesh(chipGeometry, chipMaterial);
+                chip.position.set(
+                    (Math.random() - 0.5) * 12,
+                    Math.random() * 2,
+                    (Math.random() - 0.5) * 12
+                );
+                chip.userData = { rotationSpeed: Math.random() * 0.02 + 0.01 };
+                scene.add(chip);
+                platforms.push({ chip });
+            }
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Rotate chips
+            scene.children.forEach(child => {
+                if (child.userData && child.userData.rotationSpeed) {
+                    child.rotation.y += child.userData.rotationSpeed;
+                    child.position.y += Math.sin(Date.now() * 0.001 + child.position.x) * 0.002;
+                }
+            });
+            
+            // Slight camera movement
+            camera.position.x = Math.sin(Date.now() * 0.0002) * 2;
+            camera.lookAt(0, 0, 0);
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Screen Management
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+        
+        document.getElementById('options-btn').addEventListener('click', () => {
+    showScreen('options-screen');
+});
+
+document.getElementById('options-back-btn').addEventListener('click', () => {
+    showScreen('title-screen');
+});
+
+document.getElementById('render-distance').addEventListener('input', (e) => {
+    camera.far = parseInt(e.target.value);
+    camera.updateProjectionMatrix();
+});
+
+        // Initial Loading
+        window.addEventListener('load', () => {
+            initThreeJS();
+            
+            const loadingBar = document.getElementById('initial-loading-bar');
+            let progress = 0;
+            
+            const loadingInterval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress >= 100) {
+                    progress = 100;
+                    loadingBar.style.width = '100%';
+                    clearInterval(loadingInterval);
+                    
+                    setTimeout(() => {
+                        showScreen('title-screen');
+                    }, 500);
+                } else {
+                    loadingBar.style.width = progress + '%';
+                }
+            }, 100);
+        });
+        
+        // Play Button
+        document.getElementById('play-btn').addEventListener('click', () => {
+            showScreen('world-selection');
+            renderWorldList();
+        });
+        
+        // World List Rendering
+        function renderWorldList() {
+            const worldList = document.getElementById('world-list');
+            worldList.innerHTML = '';
+            
+            if (gameState.worlds.length === 0) {
+                worldList.innerHTML = '<div style="color: #00ffff; text-align: center; padding: 40px;">No worlds created yet</div>';
+                return;
+            }
+            
+            gameState.worlds.forEach((world, index) => {
+                const worldItem = document.createElement('div');
+                worldItem.className = 'world-item';
+                worldItem.innerHTML = `
+                    <div class="world-thumbnail"></div>
+                    <div class="world-info">
+                        <div class="world-name">${world.name}</div>
+                        <div class="world-details">
+                            Created: ${world.created}<br>
+                            Mode: ${world.mode.toUpperCase()}<br>
+                            Level: ${world.level || 1}
+                        </div>
+                    </div>
+                `;
+                
+                worldItem.addEventListener('click', () => {
+                    document.querySelectorAll('.world-item').forEach(item => {
+                        item.classList.remove('selected');
+                    });
+                    worldItem.classList.add('selected');
+                    gameState.selectedWorld = index;
+                    updateWorldButtons();
+                });
+                
+                worldList.appendChild(worldItem);
+            });
+        }
+        
+        function updateWorldButtons() {
+            const hasSelection = gameState.selectedWorld !== null;
+            document.getElementById('play-world-btn').disabled = !hasSelection;
+            document.getElementById('edit-world-btn').disabled = !hasSelection;
+            document.getElementById('delete-world-btn').disabled = !hasSelection;
+        }
+        
+        // Create New World
+        document.getElementById('create-world-btn').addEventListener('click', () => {
+            gameState.selectedMode = null;
+            document.querySelectorAll('.mode-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.getElementById('create-world-confirm-btn').disabled = true;
+            showScreen('mode-selection');
+        });
+        
+        // Mode Selection
+        document.querySelectorAll('.mode-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                gameState.selectedMode = card.dataset.mode;
+                document.getElementById('create-world-confirm-btn').disabled = false;
+            });
+        });
+        
+        // Create World Confirm
+        document.getElementById('create-world-confirm-btn').addEventListener('click', () => {
+            const worldName = `New World ${gameState.worlds.length + 1}`;
+            const now = new Date();
+            const dateStr = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear().toString().slice(2)} ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')} ${now.getHours() >= 12 ? 'PM' : 'AM'}`;
+            
+            const newWorld = {
+                name: worldName,
+                created: dateStr,
+                mode: gameState.selectedMode,
+                level: 1,
+                progress: {}
+            };
+            
+            gameState.worlds.push(newWorld);
+            localStorage.setItem('digitalWorlds', JSON.stringify(gameState.worlds));
+            
+            // Start game loading
+            showScreen('game-loading');
+            startGameLoading();
+        });
+        
+        // Play Selected World
+        document.getElementById('play-world-btn').addEventListener('click', () => {
+            showScreen('game-loading');
+            startGameLoading();
+        });
+        
+        // Delete World
+        document.getElementById('delete-world-btn').addEventListener('click', () => {
+            if (gameState.selectedWorld !== null) {
+                gameState.worlds.splice(gameState.selectedWorld, 1);
+                localStorage.setItem('digitalWorlds', JSON.stringify(gameState.worlds));
+                gameState.selectedWorld = null;
+                renderWorldList();
+                updateWorldButtons();
+            }
+        });
+        
+        // Back Buttons
+        document.getElementById('back-to-title-btn').addEventListener('click', () => {
+            gameState.selectedWorld = null;
+            showScreen('title-screen');
+        });
+        
+        document.getElementById('back-to-worlds-btn').addEventListener('click', () => {
+            showScreen('world-selection');
+        });
+        
+        // Game Loading
+        function startGameLoading() {
+            const loadingBar = document.getElementById('game-loading-bar');
+            const loadingText = document.getElementById('loading-progress-text');
+            let progress = 0;
+            
+            const stages = [
+                'Loading simulation core...',
+                'Initializing platforms...',
+                'Generating fragments...',
+                'Spawning entities...',
+                'Finalizing world...'
+            ];
+            
+            let stageIndex = 0;
+            
+            const loadingInterval = setInterval(() => {
+                progress += Math.random() * 8;
+                
+                if (progress >= (stageIndex + 1) * 20 && stageIndex < stages.length - 1) {
+                    stageIndex++;
+                    document.querySelector('.loading-text').textContent = stages[stageIndex];
+                }
+                
+                if (progress >= 100) {
+                    progress = 100;
+                    loadingBar.style.width = '100%';
+                    loadingText.textContent = '100%';
+                    clearInterval(loadingInterval);
+                    
+                    setTimeout(() => {
+                        // Save selected world/mode to sessionStorage
+                        if (gameState.selectedWorld !== null) {
+                            sessionStorage.setItem('currentWorld', JSON.stringify(gameState.worlds[gameState.selectedWorld]));
+                        } else {
+                            sessionStorage.setItem('currentWorld', JSON.stringify({
+                                name: `New World ${gameState.worlds.length}`,
+                                mode: gameState.selectedMode,
+                                level: 1
+                            }));
+                        }
+                        
+                        // Redirect to level 1
+                        window.location.href = 'level_one.html';
+                    }, 500);
+                } else {
+                    loadingBar.style.width = progress + '%';
+                    loadingText.textContent = Math.floor(progress) + '%';
+                }
+            }, 100);
+        }
+        
+        // Window Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

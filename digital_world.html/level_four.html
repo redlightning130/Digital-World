@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital World - Level 4: Automation Threshold</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .hud {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .resource-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 20px;
+            background: rgba(0, 20, 20, 0.95);
+            border: 2px solid #00ffff;
+            border-radius: 8px;
+            min-width: 280px;
+            max-height: 500px;
+            overflow-y: auto;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.4);
+        }
+
+        .resource-item {
+            color: #00ffff;
+            font-size: 14px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .resource-item .value {
+            color: #00ff88;
+            font-weight: bold;
+            margin-left: 15px;
+        }
+
+        .resource-item.mineral {
+            color: #ffaa00;
+        }
+
+        .resource-item.mineral .value {
+            color: #ffcc44;
+        }
+
+        .health-bar {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 400px;
+        }
+
+        .health-container {
+            width: 100%;
+            height: 35px;
+            background: rgba(0, 20, 20, 0.95);
+            border: 2px solid #00ffff;
+            border-radius: 5px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .health-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #00ff88, #00ffff);
+            transition: width 0.3s;
+            box-shadow: 0 0 15px #00ff88;
+        }
+
+        .health-text {
+            text-align: center;
+            color: #00ffff;
+            font-size: 16px;
+            margin-top: 5px;
+            text-shadow: 0 0 10px #00ffff;
+        }
+
+        .automation-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 20px;
+            background: rgba(0, 20, 20, 0.95);
+            border: 2px solid #ffaa00;
+            border-radius: 8px;
+            min-width: 250px;
+            box-shadow: 0 0 30px rgba(255, 170, 0, 0.4);
+        }
+
+        .automation-title {
+            color: #ffaa00;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px #ffaa00;
+        }
+
+        .drone-item {
+            color: #00ffcc;
+            font-size: 14px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .drone-item .count {
+            color: #00ff88;
+            font-weight: bold;
+        }
+
+        .tool-selector {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+        }
+
+        .tool-slot {
+            width: 75px;
+            height: 75px;
+            background: rgba(0, 20, 20, 0.95);
+            border: 2px solid #004444;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #00ffff;
+            font-size: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+        }
+
+        .tool-slot.active {
+            border-color: #00ffff;
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.6);
+            background: rgba(0, 100, 100, 0.6);
+        }
+
+        .controls-hint {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 35px;
+            background: rgba(0, 20, 20, 0.9);
+            border: 2px solid #00ffff;
+            border-radius: 5px;
+            color: #00ffff;
+            font-size: 13px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 24px;
+            height: 24px;
+        }
+
+        .crosshair::before,
+        .crosshair::after {
+            content: '';
+            position: absolute;
+            background: #00ffff;
+            box-shadow: 0 0 8px #00ffff;
+        }
+
+        .crosshair::before {
+            width: 2px;
+            height: 12px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .crosshair::after {
+            width: 12px;
+            height: 2px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .notification {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 25px 50px;
+            background: rgba(0, 100, 100, 0.98);
+            border: 3px solid #00ffff;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 22px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.8);
+            text-align: center;
+            max-width: 500px;
+            z-index: 200;
+        }
+
+        .notification.show {
+            opacity: 1;
+        }
+
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s;
+        }
+
+        #loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-text {
+            color: #ffaa00;
+            font-size: 36px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px #ffaa00;
+        }
+
+        .vehicle-hud {
+            position: absolute;
+            bottom: 160px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 20px 40px;
+            background: rgba(50, 30, 0, 0.95);
+            border: 3px solid #ffaa00;
+            border-radius: 10px;
+            color: #ffaa00;
+            font-size: 20px;
+            display: none;
+            box-shadow: 0 0 30px rgba(255, 170, 0, 0.6);
+        }
+
+        .vehicle-hud.active {
+            display: block;
+        }
+
+        .drone-menu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 30px;
+            background: rgba(0, 20, 20, 0.98);
+            border: 3px solid #00ffff;
+            border-radius: 12px;
+            display: none;
+            pointer-events: all;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.7);
+            z-index: 150;
+        }
+
+        .drone-menu.active {
+            display: block;
+        }
+
+        .drone-menu-title {
+            color: #00ffff;
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+            text-shadow: 0 0 10px #00ffff;
+        }
+
+        .drone-option {
+            padding: 15px 25px;
+            margin: 10px 0;
+            background: rgba(0, 50, 50, 0.5);
+            border: 2px solid #004444;
+            border-radius: 8px;
+            color: #00ffff;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .drone-option:hover {
+            border-color: #00ffff;
+            background: rgba(0, 100, 100, 0.7);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+
+        .speed-indicator {
+            position: absolute;
+            bottom: 200px;
+            right: 30px;
+            padding: 15px 25px;
+            background: rgba(50, 30, 0, 0.9);
+            border: 2px solid #ffaa00;
+            border-radius: 8px;
+            color: #ffaa00;
+            font-size: 18px;
+            display: none;
+            box-shadow: 0 0 20px rgba(255, 170, 0, 0.5);
+        }
+
+        .speed-indicator.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="loading-screen">
+        <div class="loading-text">Level 4: Automation Threshold</div>
+        <div style="color: #00ffff; font-size: 18px; margin-top: 10px;">Initializing Industrial Systems...</div>
+    </div>
+
+    <div class="hud">
+        <div class="health-bar">
+            <div class="health-container">
+                <div class="health-fill" id="health-fill"></div>
+            </div>
+            <div class="health-text">HEALTH: <span id="health-value">100</span>/100</div>
+        </div>
+
+        <div class="automation-panel">
+            <div class="automation-title">AUTOMATION STATUS</div>
+            <div class="drone-item">
+                <span>Defense Drones:</span>
+                <span class="count" id="defense-count">0</span>
+            </div>
+            <div class="drone-item">
+                <span>Mining Drones:</span>
+                <span class="count" id="mining-count">0</span>
+            </div>
+            <div class="drone-item">
+                <span>Fetch Drones:</span>
+                <span class="count" id="fetch-count">0</span>
+            </div>
+            <div class="drone-item" style="margin-top: 15px; border-top: 1px solid #004444; padding-top: 10px;">
+                <span>Safe Zones:</span>
+                <span class="count" id="safezone-count">0</span>
+            </div>
+        </div>
+
+        <div class="resource-panel">
+            <div class="resource-item">
+                <span>CHIPS:</span>
+                <span class="value" id="chip-count">0</span>
+            </div>
+            <div class="resource-item">
+                <span>LOGIC CHIPS:</span>
+                <span class="value" id="logic-chip-count">0</span>
+            </div>
+            <div class="resource-item">
+                <span>WOOD:</span>
+                <span class="value" id="wood-count">0</span>
+            </div>
+            <div class="resource-item mineral">
+                <span>TITANIUM:</span>
+                <span class="value" id="titanium-count">0</span>
+            </div>
+            <div class="resource-item mineral">
+                <span>COPPER:</span>
+                <span class="value" id="copper-count">0</span>
+            </div>
+            <div class="resource-item mineral">
+                <span>LITHIUM:</span>
+                <span class="value" id="lithium-count">0</span>
+            </div>
+            <div class="resource-item">
+                <span>FRAGMENTS:</span>
+                <span class="value" id="fragment-count">0/12</span>
+            </div>
+        </div>
+
+        <div class="tool-selector">
+            <div class="tool-slot active" data-tool="scanner">
+                <div>SCAN</div>
+                <div>(E)</div>
+            </div>
+            <div class="tool-slot" data-tool="laser">
+                <div>LASER</div>
+                <div>(1)</div>
+            </div>
+            <div class="tool-slot" data-tool="drone">
+                <div>DRONES</div>
+                <div>(2)</div>
+            </div>
+            <div class="tool-slot" data-tool="vehicle">
+                <div>VEHICLE</div>
+                <div>(3)</div>
+            </div>
+            <div class="tool-slot" data-tool="safezone">
+                <div>SAFEZONE</div>
+                <div>(4)</div>
+            </div>
+        </div>
+
+        <div class="vehicle-hud" id="vehicle-hud">
+            HOVERBIKE ACTIVE - Press 3 to Exit
+        </div>
+
+        <div class="speed-indicator" id="speed-indicator">
+            SPEED: <span id="speed-value">0</span> m/s
+        </div>
+
+        <div class="controls-hint">
+            WASD: Move | SPACE: Jump | E: Scan/Mine | 1: Laser | 2: Drones | 3: Vehicle | 4: Safe Zone
+        </div>
+        <div class="crosshair"></div>
+        <div class="notification" id="notification"></div>
+
+        <div class="drone-menu" id="drone-menu">
+            <div class="drone-menu-title">DEPLOY DRONE</div>
+            <div class="drone-option" data-drone="defense">Defense Drone (50 Chips)</div>
+            <div class="drone-option" data-drone="mining">Mining Drone (75 Chips)</div>
+            <div class="drone-option" data-drone="fetch">Fetch Drone (40 Chips)</div>
+            <div class="drone-option" data-drone="close">Close Menu</div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        const gameState = {
+            chips: 0,
+            logicChips: 0,
+            wood: 0,
+            titanium: 0,
+            copper: 0,
+            lithium: 0,
+            fragmentsScanned: 0,
+            totalFragments: 12,
+            health: 100,
+            maxHealth: 100,
+            currentTool: 'scanner',
+            keys: {},
+            mouseMovement: { x: 0, y: 0 },
+            velocity: new THREE.Vector3(),
+            isJumping: false,
+            inVehicle: false,
+            vehicleSpeed: 0,
+            drones: {
+                defense: 0,
+                mining: 0,
+                fetch: 0
+            },
+            safeZones: 0,
+            portalActive: false,
+            canEnterPortal: false
+        };
+
+        let scene, camera, renderer, player, vehicle;
+        let mountains = [], mineralNodes = [], platforms = [], chips = [], logicChips = [], fragments = [], enemies = [];
+        let drones = [], safeZoneFields = [];
+        let powerGenerator, portal;
+        let raycaster, clock = new THREE.Clock();
+
+        const GRAVITY = -20, JUMP_FORCE = 8, MOVE_SPEED = 5, PLAYER_HEIGHT = 1.8;
+        const VEHICLE_SPEED = 20, VEHICLE_ACCEL = 10;
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.fog = new THREE.Fog(0x000000, 40, 150);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            player = new THREE.Object3D();
+            player.position.set(0, 10, 0);
+            player.add(camera);
+            camera.position.y = PLAYER_HEIGHT;
+            scene.add(player);
+
+            renderer = new THREE.WebGLRenderer({ 
+                canvas: document.getElementById('gameCanvas'),
+                antialias: true 
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x000000);
+
+            raycaster = new THREE.Raycaster();
+
+            // Industrial lighting
+            scene.add(new THREE.AmbientLight(0x404040, 0.9));
+            
+            const mainLight = new THREE.PointLight(0x00ffff, 0.8, 100);
+            mainLight.position.set(0, 30, 0);
+            scene.add(mainLight);
+
+            const industrialLight1 = new THREE.PointLight(0xffaa00, 0.5, 80);
+            industrialLight1.position.set(30, 25, 30);
+            scene.add(industrialLight1);
+
+            const industrialLight2 = new THREE.PointLight(0xff6600, 0.4, 80);
+            industrialLight2.position.set(-30, 25, -30);
+            scene.add(industrialLight2);
+
+            createWorld();
+            loadProgress();
+            setupEventListeners();
+            animate();
+
+            setTimeout(() => {
+                document.getElementById('loading-screen').classList.add('hidden');
+                document.body.addEventListener('click', () => document.body.requestPointerLock());
+                showNotification('Level 4: Automation Required');
+            }, 2500);
+        }
+
+        function loadProgress() {
+            const worldData = JSON.parse(sessionStorage.getItem('currentWorld') || '{}');
+            if (worldData.chips) gameState.chips = worldData.chips;
+            if (worldData.logicChips) gameState.logicChips = worldData.logicChips;
+            if (worldData.wood) gameState.wood = worldData.wood;
+            document.getElementById('chip-count').textContent = gameState.chips;
+            document.getElementById('logic-chip-count').textContent = gameState.logicChips;
+            document.getElementById('wood-count').textContent = gameState.wood;
+        }
+
+        function createWorld() {
+            createMountains();
+            createPlatforms();
+            createMineralNodes();
+            createChips();
+            createLogicChips();
+            createFragments();
+            createEnemies();
+            createPowerGenerator();
+            createPortal();
+            createVehicle();
+        }
+
+        function createMountains() {
+            const mountainConfigs = [
+                { x: 40, z: 40, height: 20, size: 15 },
+                { x: -50, z: -40, height: 25, size: 18 },
+                { x: 60, z: -30, height: 22, size: 16 },
+                { x: -45, z: 50, height: 18, size: 14 },
+                { x: 35, z: -55, height: 23, size: 17 },
+                { x: -60, z: 25, height: 21, size: 15 },
+            ];
+
+            mountainConfigs.forEach(config => {
+                const geometry = new THREE.ConeGeometry(config.size, config.height, 5);
+                const material = new THREE.MeshStandardMaterial({ 
+                    color: 0x1a1a1a,
+                    flatShading: true,
+                    roughness: 0.8
+                });
+                const mountain = new THREE.Mesh(geometry, material);
+                mountain.position.set(config.x, config.height / 2, config.z);
+                scene.add(mountain);
+
+                // Angular edges
+                const edges = new THREE.EdgesGeometry(geometry);
+                const edgeMaterial = new THREE.LineBasicMaterial({ 
+                    color: Math.random() > 0.5 ? 0x00ffff : 0xffaa00
+                });
+                const edgeLines = new THREE.LineSegments(edges, edgeMaterial);
+                edgeLines.position.copy(mountain.position);
+                scene.add(edgeLines);
+
+                mountains.push({ mesh: mountain, edges: edgeLines });
+            });
+        }
+
+        function createPlatforms() {
+            const configs = [
+                { x: 0, y: 0, z: 0, w: 30, d: 30 },
+                { x: 35, y: 2, z: 0, w: 20, d: 20 },
+                { x: -35, y: 3, z: 0, w: 20, d: 20 },
+                { x: 0, y: 1, z: 35, w: 20, d: 20 },
+                { x: 0, y: 2, z: -35, w: 20, d: 20 },
+            ];
+
+            configs.forEach(c => {
+                const geom = new THREE.BoxGeometry(c.w, 0.3, c.d);
+                const mat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a });
+                const plat = new THREE.Mesh(geom, mat);
+                plat.position.set(c.x, c.y, c.z);
+                scene.add(plat);
+
+                const edges = new THREE.EdgesGeometry(geom);
+                const edgeMat = new THREE.LineBasicMaterial({ color: 0x00ffff });
+                const edgeLines = new THREE.LineSegments(edges, edgeMat);
+                edgeLines.position.set(c.x, c.y + 0.16, c.z);
+                scene.add(edgeLines);
+
+                platforms.push({ mesh: plat, edges: edgeLines });
+            });
+        }
+
+        function createMineralNodes() {
+            const mineralTypes = [
+                { type: 'titanium', color: 0xaaccff, count: 8 },
+                { type: 'copper', color: 0xff8844, count: 10 },
+                { type: 'lithium', color: 0x88ffff, count: 6 }
+            ];
+
+            mineralTypes.forEach(mineral => {
+                for (let i = 0; i < mineral.count; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const radius = 20 + Math.random() * 40;
+                    const x = Math.cos(angle) * radius;
+                    const z = Math.sin(angle) * radius;
+                    const y = getGroundHeight(x, z) + 1;
+
+                    createMineralNode(x, y, z, mineral.type, mineral.color);
+                }
+            });
+        }
+
+        function createMineralNode(x, y, z, type, color) {
+            const geometry = new THREE.DodecahedronGeometry(0.8, 0);
+            const material = new THREE.MeshStandardMaterial({ 
+                color: 0x2a2a2a,
+                roughness: 0.7,
+                metalness: 0.3
+            });
+            const node = new THREE.Mesh(geometry, material);
+            node.position.set(x, y, z);
+            scene.add(node);
+
+            // Glowing seams
+            const edges = new THREE.EdgesGeometry(geometry);
+            const edgeMaterial = new THREE.LineBasicMaterial({ 
+                color: color,
+                transparent: true,
+                opacity: 0.6
+            });
+            const seams = new THREE.LineSegments(edges, edgeMaterial);
+            seams.position.copy(node.position);
+            scene.add(seams);
+
+            // Inner glow
+            const glowGeo = new THREE.SphereGeometry(0.3, 8, 8);
+            const glowMat = new THREE.MeshBasicMaterial({ 
+                color: color,
+                transparent: true,
+                opacity: 0.4
+            });
+            const glow = new THREE.Mesh(glowGeo, glowMat);
+            glow.position.copy(node.position);
+            scene.add(glow);
+
+            node.userData = { 
+                type: 'mineral',
+                mineralType: type,
+                exposed: false,
+                seams: seams,
+                glow: glow
+            };
+
+            mineralNodes.push(node);
+        }
+
+        function createChips() {
+            for (let i = 0; i < 20; i++) {
+                const angle = (Math.PI * 2 / 20) * i;
+                const radius = 15 + Math.random() * 20;
+                const x = Math.cos(angle) * radius;
+                const z = Math.sin(angle) * radius;
+                const y = getGroundHeight(x, z) + 2;
+                
+                const chip = new THREE.Mesh(
+                    new THREE.OctahedronGeometry(0.3),
+                    new THREE.MeshPhongMaterial({ 
+                        color: 0x00ff88,
+                        emissive: 0x00ff88,
+                        transparent: true,
+                        opacity: 0.6
+                    })
+                );
+                chip.position.set(x, y, z);
+                chip.userData = { type: 'chip', baseY: y };
+                scene.add(chip);
+                chips.push(chip);
+            }
+        }
+
+        function createLogicChips() {
+            for (let i = 0; i < 8; i++) {
+                const angle = (Math.PI * 2 / 8) * i;
+                const radius = 25 + Math.random() * 15;
+                const x = Math.cos(angle) * radius;
+                const z = Math.sin(angle) * radius;
+                const y = getGroundHeight(x, z) + 2.5;
+                
+                const chip = new THREE.Mesh(
+                    new THREE.OctahedronGeometry(0.35),
+                    new THREE.MeshPhongMaterial({ 
+                        color: 0x00ff88,
+                        emissive: 0x00ff88,
+                        transparent: true,
+                        opacity: 0.7
+                    })
+                );
+                chip.position.set(x, y, z);
+                chip.userData = { type: 'logicChip', baseY: y };
+                scene.add(chip);
+                logicChips.push(chip);
+            }
+        }
+
+        function createFragments() {
+            for (let i = 0; i < 12; i++) {
+                const angle = (Math.PI * 2 / 12) * i;
+                const radius = 30 + Math.random() * 20;
+                const x = Math.cos(angle) * radius;
+                const z = Math.sin(angle) * radius;
+                const y = getGroundHeight(x, z) + 2;
+                
+                const frag = new THREE.Mesh(
+                    new THREE.IcosahedronGeometry(0.5),
+                    new THREE.MeshBasicMaterial({ 
+                        color: 0x00ffff,
+                        transparent: true,
+                        opacity: 0.4,
+                        wireframe: true
+                    })
+                );
+                frag.position.set(x, y, z);
+                frag.userData = { type: 'fragment', id: i, scanned: false };
+                scene.add(frag);
+                fragments.push(frag);
+            }
+        }
+
+        function createEnemies() {
+            for (let i = 0; i < 12; i++) {
+                const angle = (Math.PI * 2 / 12) * i;
+                const radius = 25 + Math.random() * 30;
+                const x = Math.cos(angle) * radius;
+                const z = Math.sin(angle) * radius;
+                const y = getGroundHeight(x, z) + 1;
+
+                const enemy = new THREE.Group();
+
+                // Robotic body with metal plating
+                const body = new THREE.Mesh(
+                    new THREE.BoxGeometry(1, 0.5, 1.2),
+                    new THREE.MeshStandardMaterial({ 
+                        color: 0x666666,
+                        metalness: 0.8,
+                        roughness: 0.2
+                    })
+                );
+                body.position.y = 0.5;
+                enemy.add(body);
+
+                // Glowing core
+                const core = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.15, 8, 8),
+                    new THREE.MeshBasicMaterial({ 
+                        color: 0xff0000,
+                        emissive: 0xff0000
+                    })
+                );
+                core.position.y = 0.5;
+                enemy.add(core);
+
+                // Metal claws
+                for (let j = 0; j < 2; j++) {
+                    const claw = new THREE.Mesh(
+                        new THREE.ConeGeometry(0.2, 0.6, 4),
+                        new THREE.MeshStandardMaterial({ 
+                            color: 0x888888,
+                            metalness: 0.9
+                        })
+                    );
+                    claw.rotation.z = Math.PI / 2 * (j === 0 ? 1 : -1);
+                    claw.position.set(j === 0 ? -0.7 : 0.7, 0.5, 0.8);
+                    enemy.add(claw);
+                }
+
+                enemy.position.set(x, y, z);
+                enemy.userData = {
+                    type: 'enemy',
+                    health: 60,
+                    moveSpeed: 2.5,
+                    attackRange: 3,
+                    attackCooldown: 0,
+                    detectionRange: 30
+                };
+                scene.add(enemy);
+                enemies.push(enemy);
+            }
+        }
+
+        function createPowerGenerator() {
+            powerGenerator = new THREE.Mesh(
+                new THREE.BoxGeometry(2.5, 2.5, 2.5),
+                new THREE.MeshStandardMaterial({ 
+                    color: 0x1a1a1a,
+                    emissive: 0x006666,
+                    metalness: 0.5
+                })
+            );
+            powerGenerator.position.set(-15, 3, -15);
+            powerGenerator.userData = { type: 'powerGenerator', activated: false };
+            scene.add(powerGenerator);
+        }
+
+        function createPortal() {
+            portal = new THREE.Group();
+            const portalMesh = new THREE.Mesh(
+                new THREE.CylinderGeometry(3.5, 3.5, 0.8, 6),
+                new THREE.MeshPhongMaterial({ 
+                    color: 0x005555,
+                    emissive: 0x00ffff,
+                    emissiveIntensity: 0.8,
+                    transparent: true,
+                    opacity: 0.9
+                })
+            );
+            portalMesh.rotation.x = Math.PI / 2;
+            portal.add(portalMesh);
+            portal.position.set(0, 1, -70);
+            portal.userData = { type: 'portal', active: false };
+            scene.add(portal);
+        }
+
+        function createVehicle() {
+            vehicle = new THREE.Group();
+
+            // Hoverbike body
+            const body = new THREE.Mesh(
+                new THREE.BoxGeometry(1, 0.4, 2),
+                new THREE.MeshStandardMaterial({ 
+                    color: 0x00ffff,
+                    emissive: 0x00ffff,
+                    emissiveIntensity: 0.3,
+                    metalness: 0.7
+                })
+            );
+            vehicle.add(body);
+
+            // Glowing thrusters
+            for (let i = 0; i < 2; i++) {
+                const thruster = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.15, 0.15, 0.3, 8),
+                    new THREE.MeshBasicMaterial({ 
+                        color: 0xffaa00,
+                        emissive: 0xffaa00
+                    })
+                );
+                thruster.position.set(i === 0 ? -0.4 : 0.4, -0.3, -0.5);
+                vehicle.add(thruster);
+            }
+
+            vehicle.position.set(10, 2, 10);
+            vehicle.userData = { type: 'vehicle' };
+            scene.add(vehicle);
+        }
+
+        function setupEventListeners() {
+            document.addEventListener('keydown', (e) => {
+                gameState.keys[e.key.toLowerCase()] = true;
+                
+                if (e.key.toLowerCase() === 'e') handleInteraction();
+                if (e.key === ' ' && !gameState.isJumping && !gameState.inVehicle) {
+                    gameState.velocity.y = JUMP_FORCE;
+                    gameState.isJumping = true;
+                }
+                if (e.key === '1') gameState.currentTool = 'laser';
+                if (e.key === '2') {
+                    gameState.currentTool = 'drone';
+                    document.getElementById('drone-menu').classList.add('active');
+                }
+                if (e.key === '3') {
+                    if (gameState.inVehicle) {
+                        exitVehicle();
+                    } else {
+                        enterVehicle();
+                    }
+                }
+                if (e.key === '4') gameState.currentTool = 'safezone';
+                
+                updateToolUI();
+            });
+
+            document.addEventListener('keyup', (e) => {
+                gameState.keys[e.key.toLowerCase()] = false;
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (document.pointerLockElement === document.body) {
+                    gameState.mouseMovement.x += e.movementX;
+                    gameState.mouseMovement.y += e.movementY;
+                }
+            });
+
+            document.addEventListener('mousedown', (e) => {
+                if (e.button === 0) {
+                    if (gameState.currentTool === 'safezone') deploySafeZone();
+                }
+            });
+
+            // Drone menu
+            document.querySelectorAll('.drone-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    const droneType = option.dataset.drone;
+                    if (droneType === 'close') {
+                        document.getElementById('drone-menu').classList.remove('active');
+                    } else {
+                        deployDrone(droneType);
+                        document.getElementById('drone-menu').classList.remove('active');
+                    }
+                });
+            });
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        function deployDrone(type) {
+            const costs = { defense: 50, mining: 75, fetch: 40 };
+            const cost = costs[type];
+
+            if (gameState.chips < cost) {
+                showNotification(`Need ${cost} chips for ${type} drone`);
+                return;
+            }
+
+            gameState.chips -= cost;
+            gameState.drones[type]++;
+            document.getElementById('chip-count').textContent = gameState.chips;
+            document.getElementById(`${type}-count`).textContent = gameState.drones[type];
+
+            createDroneEntity(type, player.position.clone());
+            showNotification(`${type.toUpperCase()} Drone Deployed`);
+        }
+
+        function createDroneEntity(type, position) {
+            const drone = new THREE.Group();
+
+            // Clean white body
+            const body = new THREE.Mesh(
+                new THREE.SphereGeometry(0.4, 8, 8),
+                new THREE.MeshStandardMaterial({ 
+                    color: 0xffffff,
+                    metalness: 0.8,
+                    roughness: 0.2
+                })
+            );
+            drone.add(body);
+
+            // Glowing core
+            const colors = { defense: 0xff0000, mining: 0xffaa00, fetch: 0x00ffff };
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.2, 8, 8),
+                new THREE.MeshBasicMaterial({ 
+                    color: colors[type],
+                    emissive: colors[type]
+                })
+            );
+            drone.add(core);
+
+            drone.position.copy(position);
+            drone.position.y += 3;
+            drone.userData = {
+                type: 'drone',
+                droneType: type,
+                target: null,
+                cooldown: 0
+            };
+
+            scene.add(drone);
+            drones.push(drone);
+        }
+
+        function deploySafeZone() {
+            if (gameState.chips < 100) {
+                showNotification('Need 100 chips for Safe Zone');
+                return;
+            }
+
+            gameState.chips -= 100;
+            gameState.safeZones++;
+            document.getElementById('chip-count').textContent = gameState.chips;
+            document.getElementById('safezone-count').textContent = gameState.safeZones;
+
+            // Create hex-grid force field
+            const field = new THREE.Mesh(
+                new THREE.CylinderGeometry(10, 10, 15, 6, 1, true),
+                new THREE.MeshBasicMaterial({ 
+                    color: 0x00ffff,
+                    transparent: true,
+                    opacity: 0.2,
+                    side: THREE.DoubleSide,
+                    wireframe: true
+                })
+            );
+            field.position.copy(player.position);
+            field.position.y += 7;
+            field.userData = { type: 'safezone', radius: 10 };
+            scene.add(field);
+            safeZoneFields.push(field);
+
+            showNotification('Safe Zone Deployed');
+        }
+
+        function enterVehicle() {
+            const distance = player.position.distanceTo(vehicle.position);
+            if (distance < 3) {
+                gameState.inVehicle = true;
+                player.position.copy(vehicle.position);
+                player.position.y += 1;
+                document.getElementById('vehicle-hud').classList.add('active');
+                document.getElementById('speed-indicator').classList.add('active');
+                showNotification('Hoverbike Active');
+            }
+        }
+
+        function exitVehicle() {
+            gameState.inVehicle = false;
+            gameState.vehicleSpeed = 0;
+            document.getElementById('vehicle-hud').classList.remove('active');
+            document.getElementById('speed-indicator').classList.remove('active');
+        }
+
+        function handleInteraction() {
+            raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+            
+            // Fragments
+            const fragIntersects = raycaster.intersectObjects(fragments);
+            if (fragIntersects.length > 0 && fragIntersects[0].distance < 5) {
+                const frag = fragIntersects[0].object;
+                if (!frag.userData.scanned) {
+                    frag.userData.scanned = true;
+                    gameState.fragmentsScanned++;
+                    frag.material.color.setHex(0x00ff88);
+                    document.getElementById('fragment-count').textContent = `${gameState.fragmentsScanned}/${gameState.totalFragments}`;
+                    showNotification('Fragment Scanned');
+                    return;
+                }
+            }
+
+            // Mineral nodes
+            const nodeIntersects = raycaster.intersectObjects(mineralNodes);
+            if (nodeIntersects.length > 0 && nodeIntersects[0].distance < 4) {
+                const node = nodeIntersects[0].object;
+                if (!node.userData.exposed) {
+                    node.userData.exposed = true;
+                    node.userData.seams.material.opacity = 1;
+                    node.userData.glow.material.opacity = 0.8;
+                    showNotification('Mineral Node Exposed - Deploy Mining Drone');
+                }
+            }
+
+            // Power generator
+            if (powerGenerator && player.position.distanceTo(powerGenerator.position) < 5) {
+                if (gameState.fragmentsScanned >= gameState.totalFragments && 
+                    gameState.titanium >= 10 && gameState.copper >= 10) {
+                    gameState.portalActive = true;
+                    gameState.canEnterPortal = true;
+                    showNotification('Power Generator Activated - Portal Online');
+                } else {
+                    showNotification('Need: 12 Fragments, 10 Titanium, 10 Copper');
+                }
+            }
+
+            // Portal
+            if (gameState.canEnterPortal && player.position.distanceTo(portal.position) < 6) {
+                const worldData = JSON.parse(sessionStorage.getItem('currentWorld'));
+                worldData.level = 5;
+                worldData.chips = gameState.chips;
+                worldData.logicChips = gameState.logicChips;
+                sessionStorage.setItem('currentWorld', JSON.stringify(worldData));
+                
+                document.getElementById('loading-screen').classList.remove('hidden');
+                setTimeout(() => window.location.href = 'level_5.html', 1000);
+            }
+        }
+
+        function updatePlayer(delta) {
+            const rotationSpeed = 0.002;
+            player.rotation.y -= gameState.mouseMovement.x * rotationSpeed;
+            camera.rotation.x -= gameState.mouseMovement.y * rotationSpeed;
+            camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
+            gameState.mouseMovement.x = 0;
+            gameState.mouseMovement.y = 0;
+
+            if (gameState.inVehicle) {
+                updateVehicleMovement(delta);
+            } else {
+                updateWalkingMovement(delta);
+            }
+
+            // Collect chips
+            chips.forEach(chip => {
+                if (player.position.distanceTo(chip.position) < 2) {
+                    gameState.chips++;
+                    document.getElementById('chip-count').textContent = gameState.chips;
+                    scene.remove(chip);
+                    chips.splice(chips.indexOf(chip), 1);
+                }
+            });
+
+            logicChips.forEach(chip => {
+                if (player.position.distanceTo(chip.position) < 2) {
+                    gameState.logicChips++;
+                    document.getElementById('logic-chip-count').textContent = gameState.logicChips;
+                    scene.remove(chip);
+                    logicChips.splice(logicChips.indexOf(chip), 1);
+                }
+            });
+        }
+
+        function updateWalkingMovement(delta) {
+            const moveVector = new THREE.Vector3();
+            if (gameState.keys['w']) moveVector.z -= 1;
+            if (gameState.keys['s']) moveVector.z += 1;
+            if (gameState.keys['a']) moveVector.x -= 1;
+            if (gameState.keys['d']) moveVector.x += 1;
+
+            if (moveVector.length() > 0) {
+                moveVector.normalize();
+                moveVector.applyQuaternion(player.quaternion);
+                player.position.x += moveVector.x * MOVE_SPEED * delta;
+                player.position.z += moveVector.z * MOVE_SPEED * delta;
+            }
+
+            gameState.velocity.y += GRAVITY * delta;
+            player.position.y += gameState.velocity.y * delta;
+
+            const groundY = getGroundHeight(player.position.x, player.position.z);
+            if (player.position.y <= groundY) {
+                player.position.y = groundY;
+                gameState.velocity.y = 0;
+                gameState.isJumping = false;
+            }
+        }
+
+        function updateVehicleMovement(delta) {
+            const moveVector = new THREE.Vector3();
+            if (gameState.keys['w']) {
+                gameState.vehicleSpeed = Math.min(gameState.vehicleSpeed + VEHICLE_ACCEL * delta, VEHICLE_SPEED);
+            } else if (gameState.keys['s']) {
+                gameState.vehicleSpeed = Math.max(gameState.vehicleSpeed - VEHICLE_ACCEL * delta, -VEHICLE_SPEED / 2);
+            } else {
+                gameState.vehicleSpeed *= 0.95;
+            }
+
+            if (gameState.keys['a']) player.rotation.y += 2 * delta;
+            if (gameState.keys['d']) player.rotation.y -= 2 * delta;
+
+            moveVector.z = -gameState.vehicleSpeed * delta;
+            moveVector.applyQuaternion(player.quaternion);
+            player.position.x += moveVector.x;
+            player.position.z += moveVector.z;
+
+            const groundY = getGroundHeight(player.position.x, player.position.z);
+            player.position.y = groundY + 2;
+
+            vehicle.position.copy(player.position);
+            vehicle.position.y -= 1;
+            vehicle.rotation.y = player.rotation.y;
+
+            document.getElementById('speed-value').textContent = Math.abs(gameState.vehicleSpeed).toFixed(1);
+        }
+
+        function getGroundHeight(x, z) {
+            let maxY = 0;
+            
+            platforms.forEach(p => {
+                const hw = p.mesh.geometry.parameters.width / 2;
+                const hd = p.mesh.geometry.parameters.depth / 2;
+                if (x >= p.mesh.position.x - hw && x <= p.mesh.position.x + hw &&
+                    z >= p.mesh.position.z - hd && z <= p.mesh.position.z + hd) {
+                    maxY = Math.max(maxY, p.mesh.position.y + 0.15);
+                }
+            });
+
+            mountains.forEach(m => {
+                const dist = Math.sqrt((x - m.mesh.position.x) ** 2 + (z - m.mesh.position.z) ** 2);
+                const radius = m.mesh.geometry.parameters.radiusBottom;
+                if (dist < radius) {
+                    const height = m.mesh.geometry.parameters.height;
+                    maxY = Math.max(maxY, height * (1 - dist / radius));
+                }
+            });
+
+            return maxY;
+        }
+
+        function updateDrones(delta) {
+            drones.forEach(drone => {
+                const droneType = drone.userData.droneType;
+
+                if (droneType === 'defense') {
+                    // Attack nearby enemies
+                    enemies.forEach(enemy => {
+                        const dist = drone.position.distanceTo(enemy.position);
+                        if (dist < 15) {
+                            drone.userData.cooldown -= delta;
+                            if (drone.userData.cooldown <= 0) {
+                                enemy.userData.health -= 10;
+                                if (enemy.userData.health <= 0) {
+                                    scene.remove(enemy);
+                                    enemies.splice(enemies.indexOf(enemy), 1);
+                                }
+                                drone.userData.cooldown = 0.5;
+                            }
+                        }
+                    });
+                } else if (droneType === 'mining') {
+                    // Mine exposed nodes
+                    mineralNodes.forEach(node => {
+                        const dist = drone.position.distanceTo(node.position);
+                        if (dist < 3 && node.userData.exposed) {
+                            drone.userData.cooldown -= delta;
+                            if (drone.userData.cooldown <= 0) {
+                                const mineralType = node.userData.mineralType;
+                                gameState[mineralType]++;
+                                document.getElementById(`${mineralType}-count`).textContent = gameState[mineralType];
+                                scene.remove(node);
+                                scene.remove(node.userData.seams);
+                                scene.remove(node.userData.glow);
+                                mineralNodes.splice(mineralNodes.indexOf(node), 1);
+                                drone.userData.cooldown = 2;
+                            }
+                        }
+                    });
+                }
+
+                // Float and move
+                drone.position.y += Math.sin(Date.now() * 0.002 + drone.position.x) * 0.01;
+                drone.rotation.y += 0.02;
+            });
+        }
+
+        function updateEnemies(delta) {
+            enemies.forEach(enemy => {
+                // Check if in safe zone
+                let inSafeZone = false;
+                safeZoneFields.forEach(field => {
+                    if (enemy.position.distanceTo(field.position) < field.userData.radius) {
+                        inSafeZone = true;
+                    }
+                });
+
+                if (inSafeZone) return;
+
+                const dist = enemy.position.distanceTo(player.position);
+                if (dist < enemy.userData.detectionRange) {
+                    const dir = new THREE.Vector3()
+                        .subVectors(player.position, enemy.position)
+                        .normalize();
+                    dir.y = 0;
+                    enemy.position.add(dir.multiplyScalar(enemy.userData.moveSpeed * delta));
+                    enemy.rotation.y = Math.atan2(dir.x, dir.z);
+
+                    if (dist < enemy.userData.attackRange && !gameState.inVehicle) {
+                        enemy.userData.attackCooldown -= delta;
+                        if (enemy.userData.attackCooldown <= 0) {
+                            gameState.health -= 20;
+                            gameState.health = Math.max(0, gameState.health);
+                            updateHealthUI();
+                            enemy.userData.attackCooldown = 1;
+                            
+                            if (gameState.health <= 0) {
+                                showNotification('SYSTEM FAILURE');
+                                setTimeout(() => location.reload(), 2000);
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateHealthUI() {
+            document.getElementById('health-fill').style.width = (gameState.health / 100 * 100) + '%';
+            document.getElementById('health-value').textContent = Math.floor(gameState.health);
+        }
+
+        function updateToolUI() {
+            document.querySelectorAll('.tool-slot').forEach(slot => slot.classList.remove('active'));
+            const tools = ['scanner', 'laser', 'drone', 'vehicle', 'safezone'];
+            const index = tools.indexOf(gameState.currentTool);
+            if (index >= 0) {
+                document.querySelectorAll('.tool-slot')[index].classList.add('active');
+            }
+        }
+
+        function showNotification(msg) {
+            const notif = document.getElementById('notification');
+            notif.textContent = msg;
+            notif.classList.add('show');
+            setTimeout(() => notif.classList.remove('show'), 3000);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+
+            updatePlayer(delta);
+            updateDrones(delta);
+            updateEnemies(delta);
+
+            chips.forEach(c => {
+                c.rotation.y += 0.02;
+                c.position.y = c.userData.baseY + Math.sin(Date.now() * 0.001) * 0.1;
+            });
+
+            logicChips.forEach(c => {
+                c.rotation.y += 0.03;
+                c.position.y = c.userData.baseY + Math.sin(Date.now() * 0.0015) * 0.15;
+            });
+
+            if (gameState.portalActive) {
+                portal.rotation.y += 0.01;
+                powerGenerator.rotation.y += 0.015;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        init();
+    </script>
+</body>
+</html>

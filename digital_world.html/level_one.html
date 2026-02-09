@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital World - Level 1</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* HUD */
+        .hud {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+        #hotbar {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .slot {
+             width: 50px;
+             height: 50px;
+             border: 2px solid #00ffff;
+             background: rgba(0, 20, 20, 0.7);
+             box-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
+        }
+
+        .slot.selected {
+             border-color: #00ff88;
+             box-shadow: 0 0 20px #00ff88;
+        }
+
+        .chip-counter {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: rgba(0, 20, 20, 0.8);
+            border: 2px solid #00ffff;
+            border-radius: 5px;
+            color: #00ff88;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 0 0 10px #00ff88;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .fragment-counter {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            padding: 12px 20px;
+            background: rgba(0, 20, 20, 0.8);
+            border: 2px solid #00ffff;
+            border-radius: 5px;
+            color: #00ffff;
+            font-size: 18px;
+            text-shadow: 0 0 10px #00ffff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .controls-hint {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 30px;
+            background: rgba(0, 20, 20, 0.8);
+            border: 2px solid #00ffff;
+            border-radius: 5px;
+            color: #00ffff;
+            font-size: 16px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .scanner-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            border: 3px solid #00ffff;
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.3s;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+        }
+
+        .scanner-indicator.active {
+            opacity: 0.5;
+            animation: scanPulse 2s infinite;
+        }
+
+        @keyframes scanPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+            50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.7; }
+        }
+
+        .crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+        }
+
+        .crosshair::before,
+        .crosshair::after {
+            content: '';
+            position: absolute;
+            background: #00ffff;
+            box-shadow: 0 0 5px #00ffff;
+        }
+
+        .crosshair::before {
+            width: 2px;
+            height: 10px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .crosshair::after {
+            width: 10px;
+            height: 2px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .notification {
+            position: absolute;
+            top: 140px;
+            right: 20px;
+            padding: 10px 20px;
+            background: rgba(0, 100, 100, 0.9);
+            border: 2px solid #00ffff;
+            border-radius: 5px;
+            color: #fff;
+            font-size: 16px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+
+        .notification.show {
+            opacity: 1;
+        }
+
+        .portal-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 30px 50px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 3px solid #00ff88;
+            border-radius: 10px;
+            color: #00ff88;
+            font-size: 28px;
+            text-align: center;
+            opacity: 0;
+            pointer-events: none;
+            box-shadow: 0 0 40px rgba(0, 255, 136, 0.7);
+        }
+
+        .portal-message.show {
+            opacity: 1;
+        }
+
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s;
+        }
+
+        #loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-text {
+            color: #00ffff;
+            font-size: 32px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px #00ffff;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loading-text">Initializing Simulation...</div>
+    </div>
+
+    <!-- HUD -->
+    <div class="hud">
+        <div class="chip-counter">
+    CHIPS: <span id="chip-count">0</span>
+</div>
+
+        <div class="fragment-counter">
+            FRAGMENTS SCANNED: <span id="fragment-count">0</span>/5
+        </div>
+        <div id="hotbar">
+    <div class="slot selected"></div>
+    <div class="slot"></div>
+    <div class="slot"></div>
+    <div class="slot"></div>
+    <div class="slot"></div>
+    <div class="slot"></div>
+    <div class="slot"></div>
+    <div class="slot"></div>
+    <div class="slot"></div>
+</div>
+
+        <div class="crosshair"></div>
+        <div class="scanner-indicator" id="scanner-indicator"></div>
+        <div class="notification" id="notification"></div>
+        <div class="portal-message" id="portal-message">
+            Press E to enter the Portal
+        </div>
+        
+</div>
+
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Game State
+        const gameState = {
+            chips: 0,
+            fragmentsScanned: 0,
+            totalFragments: 5,
+            portalActive: false,
+            canEnterPortal: false,
+            isScanning: false,
+            keys: {},
+            mouseMovement: { x: 0, y: 0 },
+            velocity: new THREE.Vector3(),
+            isJumping: false,
+            powerGeneratorActivated: false,
+            scannerUnlocked: false,
+            scannerCrafted: false,
+            generatorBlueprintUnlocked: false,
+            generatorCrafted: false,
+            generatorPlaced: false,
+            heldItem: null,
+            hotbar: new Array(9).fill(null),
+            selectedSlot: 0,
+
+
+        };
+
+        // Three.js Setup
+        let scene, camera, renderer, controls;
+        let player, playerBody;
+        let platforms = [], chips = [], fragments = [], creatures = [];
+        let powerGenerator, portal, portalParticles = [];
+        let raycaster, mouse;
+        let clock = new THREE.Clock();
+        let heldItemMesh = null;
+
+
+
+
+        // Constants
+        const GRAVITY = -20;
+        const JUMP_FORCE = 8;
+        const MOVE_SPEED = 5;
+        const PLAYER_HEIGHT = 1.8;
+        const PORTAL_TRIGGER_RADIUS = 2.2;
+        const SNEAK_MULTIPLIER = 0.4;
+        const SNEAK_CAMERA_OFFSET = 0.4;
+
+
+        function init() {
+            // Scene
+            scene = new THREE.Scene();
+            scene.fog = new THREE.Fog(0x000000, 20, 80);
+
+            // Camera (First Person)
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            
+            // Player Body (invisible collision box)
+            player = new THREE.Object3D();
+            player.position.set(0, 2, 0);
+            player.add(camera);
+            camera.position.y = PLAYER_HEIGHT;
+            scene.add(player);
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ 
+                canvas: document.getElementById('gameCanvas'),
+                antialias: true 
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x000000);
+
+            // Raycaster for interactions
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+
+            const pointLight = new THREE.PointLight(0x00ffff, 0.5, 50);
+            pointLight.position.set(0, 10, 0);
+            scene.add(pointLight);
+
+            // Create World
+            createPlatforms();
+            createChips();       
+            createFragments();    
+            createCreatures();
+            createPowerGenerator();
+            createPortal();
+
+
+            // Event Listeners
+            setupEventListeners();
+
+            // Start Animation
+            animate();
+
+            // Hide loading screen
+            setTimeout(() => {
+                document.getElementById('loading-screen').classList.add('hidden');
+                // Request pointer lock
+                document.body.addEventListener('click', () => {
+                    document.body.requestPointerLock();
+                });
+            }, 1500);
+        }
+function createHeldScanner() {
+    const geo = new THREE.BoxGeometry(0.2, 0.1, 0.4);
+    const mat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+    const mesh = new THREE.Mesh(geo, mat);
+
+    mesh.position.set(0.3, -0.3, -0.6);
+    mesh.rotation.y = Math.PI;
+    return mesh;
+}
+function createHeldGenerator() {
+    const geo = new THREE.BoxGeometry(0.4, 0.4, 0.4);
+    const mat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+    const mesh = new THREE.Mesh(geo, mat);
+
+    mesh.position.set(0.4, -0.4, -0.7);
+    return mesh;
+}
+
+function updateHeldItemVisual() {
+    if (heldItemMesh) {
+        camera.remove(heldItemMesh);
+        heldItemMesh = null;
+    }
+
+    if (gameState.heldItem === 'scanner') {
+        heldItemMesh = createHeldScanner();
+        camera.add(heldItemMesh);
+    }
+
+    if (gameState.heldItem === 'powerGenerator') {
+        heldItemMesh = createHeldGenerator();
+        camera.add(heldItemMesh);
+    }
+}
+
+
+// ===== PLATFORM GRID SYSTEM =====
+let platformGrid = new Map();
+let PLATFORM_Y = 0;
+let PLATFORM_SIZE = 10;
+let PLATFORM_SPACING = 10;
+let RENDER_DISTANCE = 3; // adjustable
+
+function createPlatforms() {
+    updatePlatformGrid();
+}
+
+function updatePlatformGrid() {
+    const playerGridX = Math.floor(player.position.x / PLATFORM_SPACING);
+    const playerGridZ = Math.floor(player.position.z / PLATFORM_SPACING);
+
+    for (let x = -RENDER_DISTANCE; x <= RENDER_DISTANCE; x++) {
+        for (let z = -RENDER_DISTANCE; z <= RENDER_DISTANCE; z++) {
+            const gx = playerGridX + x;
+            const gz = playerGridZ + z;
+            const key = `${gx},${gz}`;
+
+            if (!platformGrid.has(key)) {
+    const worldX = gx * PLATFORM_SPACING;
+    const worldZ = gz * PLATFORM_SPACING;
+
+    const platform = createPlatform(worldX, PLATFORM_Y, worldZ, PLATFORM_SIZE, PLATFORM_SIZE);
+    platformGrid.set(key, platform);
+
+
+    spawnPlatformContent(worldX, PLATFORM_Y, worldZ);
+}
+
+        }
+    }
+}
+
+
+function spawnPlatformContent(x, y, z) {
+    // 30% chance for a chip
+    if (Math.random() < 0.3) {
+        createChip(
+            x + (Math.random() - 0.5) * 6,
+            y + 1.5,
+            z + (Math.random() - 0.5) * 6
+        );
+    }
+
+    // RARE fragment (controlled)
+    if (fragments.length < gameState.totalFragments && Math.random() < 0.08) {
+        createFragment(
+            x + (Math.random() - 0.5) * 6,
+            y + 1.2,
+            z + (Math.random() - 0.5) * 6,
+            fragments.length
+        );
+    }
+}
+
+            // Builds Platforms
+        function createPlatform(x, y, z, width, depth) {
+    const geometry = new THREE.BoxGeometry(width, 0.3, depth);
+    const material = new THREE.MeshStandardMaterial({ 
+        color: 0x1a1a1a,
+        roughness: 0.9,
+        metalness: 0.1
+    });
+
+    const platform = new THREE.Mesh(geometry, material);
+    platform.position.set(x, y, z);
+    scene.add(platform);
+
+    const edgeGeometry = new THREE.EdgesGeometry(geometry);
+    const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x00ffff });
+    const edges = new THREE.LineSegments(edgeGeometry, edgeMaterial);
+    edges.position.set(x, y + 0.16, z);
+    scene.add(edges);
+
+    const glowGeometry = new THREE.PlaneGeometry(width + 0.2, depth + 0.2);
+    const glowMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0x00ffff,
+        transparent: true,
+        opacity: 0.1,
+        side: THREE.DoubleSide
+    });
+    const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+    glow.rotation.x = -Math.PI / 2;
+    glow.position.set(x, y + 0.2, z);
+    scene.add(glow);
+
+    platforms.push({ mesh: platform });
+    return { mesh: platform, edges, glow };
+}
+
+function createChips() {
+    const chipPositions = [
+        { x: 5, y: 1.5, z: 5 },
+        { x: -5, y: 1.5, z: -5 },
+        { x: 8, y: 1.5, z: -3 },
+        { x: -7, y: 1.5, z: 4 },
+        { x: 18, y: 1.5, z: 0 },
+        { x: -18, y: 1.5, z: 0 },
+        { x: 0, y: 1.5, z: 18 },
+        { x: 0, y: 1.5, z: -18 }
+    ];
+
+    chipPositions.forEach(pos => {
+        createChip(pos.x, pos.y, pos.z);
+    });
+}
+
+
+        
+
+        function createChip(x, y, z) {
+            // Glass-like shard with matrix code inside
+            const geometry = new THREE.OctahedronGeometry(0.3, 0);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: 0x00ff88,
+                transparent: true,
+                opacity: 0.6,
+                emissive: 0x00ff88,
+                emissiveIntensity: 0.3
+            });
+            const chip = new THREE.Mesh(geometry, material);
+            chip.position.set(x, y, z);
+            
+            // Inner glow
+            const innerGeo = new THREE.OctahedronGeometry(0.15, 0);
+            const innerMat = new THREE.MeshBasicMaterial({ 
+                color: 0x00ff88,
+                transparent: true,
+                opacity: 0.8
+            });
+            const innerChip = new THREE.Mesh(innerGeo, innerMat);
+            chip.add(innerChip);
+
+            chip.userData = { 
+                type: 'chip',
+                rotation: Math.random() * 0.02 + 0.01,
+                floatOffset: Math.random() * Math.PI * 2,
+                baseY: chip.position.y
+            };
+            
+            scene.add(chip);
+            chips.push(chip);
+        }
+
+        function createFragments() {
+            const fragmentPositions = [
+                { x: 3, y: 1, z: -8 },
+                { x: -15, y: 1, z: 5 },
+                { x: 20, y: 1, z: -5 },
+                { x: -8, y: 3.5, z: -10 },
+                { x: 15, y: 1, z: 15 },
+            ];
+
+            fragmentPositions.forEach((pos, index) => {
+                createFragment(pos.x, pos.y, pos.z, index);
+            });
+        }
+
+        function createFragment(x, y, z, id) {
+            // Holographic broken geometry
+            const geometry = new THREE.IcosahedronGeometry(0.5, 0);
+            const material = new THREE.MeshBasicMaterial({ 
+                color: 0x00ffff,
+                transparent: true,
+                opacity: 0.4,
+                wireframe: true
+            });
+            const fragment = new THREE.Mesh(geometry, material);
+            fragment.position.set(x, y, z);
+
+            // Glitch particles
+            const particleGeo = new THREE.BufferGeometry();
+            const particlePositions = [];
+            for (let i = 0; i < 20; i++) {
+                particlePositions.push(
+                    (Math.random() - 0.5) * 2,
+                    (Math.random() - 0.5) * 2,
+                    (Math.random() - 0.5) * 2
+                );
+            }
+            particleGeo.setAttribute('position', new THREE.Float32BufferAttribute(particlePositions, 3));
+            const particleMat = new THREE.PointsMaterial({ 
+                color: 0x00ffff, 
+                size: 0.05,
+                transparent: true,
+                opacity: 0.6
+            });
+            const particles = new THREE.Points(particleGeo, particleMat);
+            fragment.add(particles);
+
+            fragment.userData = { 
+                type: 'fragment',
+                id: id,
+                scanned: false,
+                rotation: Math.random() * 0.03
+            };
+            
+            scene.add(fragment);
+            fragments.push(fragment);
+        }
+
+        
+
+            function createCreatures() {
+    const creaturePositions = [
+        { x: 8, y: 0.5, z: 3 },
+        { x: -10, y: 0.5, z: -8 },
+        { x: 15, y: 0.5, z: -10 },
+        { x: -5, y: 0.5, z: 10 },
+    ];
+
+    creaturePositions.forEach(pos => {
+        createCreature(pos.x, pos.y, pos.z);
+    });
+}
+
+        
+
+        function createCreature(x, y, z) {
+    const body = new THREE.Group();
+
+    // Body mesh
+    const bodyGeometry = new THREE.BoxGeometry(0.6, 0.3, 0.8);
+    const bodyMaterial = new THREE.MeshPhongMaterial({ 
+        color: 0x003333,
+        emissive: 0x002222,
+        flatShading: true
+    });
+    const bodyMesh = new THREE.Mesh(bodyGeometry, bodyMaterial);
+    bodyMesh.position.y = 0.3;
+    body.add(bodyMesh);
+
+    // Legs
+    for (let i = 0; i < 4; i++) {
+        const leg = new THREE.Mesh(
+            new THREE.BoxGeometry(0.1, 0.3, 0.1),
+            new THREE.MeshPhongMaterial({ color: 0x004444 })
+        );
+        const side = i < 2 ? 1 : -1;
+        const forward = i % 2 === 0 ? 1 : -1;
+        leg.position.set(side * 0.4, 0.15, forward * 0.3);
+        body.add(leg);
+    }
+
+    // Eyes
+    for (let i = 0; i < 2; i++) {
+        const eye = new THREE.Mesh(
+            new THREE.SphereGeometry(0.08, 8, 8),
+            new THREE.MeshBasicMaterial({ color: 0x00ffff })
+        );
+        eye.position.set(i === 0 ? -0.15 : 0.15, 0.4, 0.5);
+        body.add(eye);
+    }
+
+    // ✅ THIS MUST COME AFTER body EXISTS
+    body.userData = {
+        type: 'creature',
+        scannable: true,
+        scanName: 'Digital Crab',
+        moveSpeed: 0.5,
+        direction: new THREE.Vector3(
+            Math.random() - 0.5,
+            0,
+            Math.random() - 0.5
+        ).normalize(),
+        changeDirectionTimer: Math.random() * 3 + 2
+    };
+
+    body.position.set(x, y, z);
+    scene.add(body);
+    creatures.push(body);
+}
+
+
+        function createPowerGenerator() {
+
+            // Minimalist cube inspired by Manifold Garden
+            const geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: 0x1a1a1a,
+                emissive: 0x003333,
+                emissiveIntensity: 0.3
+            });
+            powerGenerator = new THREE.Mesh(geometry, material);
+            powerGenerator.position.set(-5, 1.5, -5);
+            powerGenerator.userData.pickable = true;
+
+            // Inner glow
+            const innerGeometry = new THREE.BoxGeometry(1.2, 1.2, 1.2);
+            const innerMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0x00ffff,
+                transparent: true,
+                opacity: 0.2
+            });
+            const innerGlow = new THREE.Mesh(innerGeometry, innerMaterial);
+            powerGenerator.add(innerGlow);
+
+            // Edge glow
+            const edgeGeometry = new THREE.EdgesGeometry(geometry);
+            const edgeMaterial = new THREE.LineBasicMaterial({ 
+                color: 0x00ffff,
+                linewidth: 2
+            });
+            const edges = new THREE.LineSegments(edgeGeometry, edgeMaterial);
+            powerGenerator.add(edges);
+
+            powerGenerator.userData.type = 'powerGenerator';
+powerGenerator.userData.activated = false;
+powerGenerator.userData.innerGlow = innerGlow;
+powerGenerator.userData.pickable = true;
+
+
+            scene.add(powerGenerator);
+        }
+function addItemToHotbar(item) {
+    const slot = gameState.hotbar.findIndex(s => s === null);
+    if (slot === -1) {
+        showNotification('Hotbar full');
+        return false;
+    }
+    gameState.hotbar[slot] = item;
+    gameState.selectedSlot = slot;
+    updateHeldItemFromHotbar();
+    return true;
+}
+
+        function createPortal() {
+            portal = new THREE.Group();
+            portal.position.set(0, 0.1, -30);
+            const socketGeometry = new THREE.CylinderGeometry(0.6, 0.6, 0.2, 16);
+const socketMaterial = new THREE.MeshBasicMaterial({
+    color: 0x00ffff,
+    transparent: true,
+    opacity: 0.3
+});
+const generatorSocket = new THREE.Mesh(socketGeometry, socketMaterial);
+generatorSocket.position.set(0, 0.1, 0);
+portal.add(generatorSocket);
+
+portal.userData.socket = generatorSocket;
+portal.userData.generatorInserted = false;
+generatorSocket.userData.type = 'generatorSocket';
+
+            // Hexagonal outline (dormant)
+            const hexShape = new THREE.Shape();
+            const hexRadius = 2;
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI / 3) * i;
+                const x = Math.cos(angle) * hexRadius;
+                const y = Math.sin(angle) * hexRadius;
+                if (i === 0) hexShape.moveTo(x, y);
+                else hexShape.lineTo(x, y);
+            }
+            hexShape.lineTo(Math.cos(0) * hexRadius, Math.sin(0) * hexRadius);
+
+            const hexGeometry = new THREE.ShapeGeometry(hexShape);
+            const hexMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0x003333,
+                transparent: true,
+                opacity: 0.3,
+                side: THREE.DoubleSide
+            });
+            const hexMesh = new THREE.Mesh(hexGeometry, hexMaterial);
+            hexMesh.rotation.x = -Math.PI / 2;
+            hexMesh.position.y = 0;
+            portal.add(hexMesh);
+
+            // Hex outline
+            const hexOutline = new THREE.Line(
+                new THREE.BufferGeometry().setFromPoints(hexShape.getPoints()),
+                new THREE.LineBasicMaterial({ color: 0x00ffff, linewidth: 2 })
+            );
+            hexOutline.rotation.x = -Math.PI / 2;
+            hexOutline.position.y = 0.05;
+            portal.add(hexOutline);
+
+            portal.userData = {
+                type: 'portal',
+                active: false,
+                hexMesh: hexMesh,
+                hexOutline: hexOutline
+            };
+
+            scene.add(portal);
+        }
+
+        function activatePortal() {
+            if (gameState.portalActive) return;
+            gameState.portalActive = true;
+
+            const hexMesh = portal.userData.hexMesh;
+            const hexOutline = portal.userData.hexOutline;
+
+            // Animation: Hex deepens and opens
+            let animProgress = 0;
+            const animInterval = setInterval(() => {
+                animProgress += 0.02;
+
+                if (animProgress < 1) {
+                    hexMesh.position.y = -animProgress * 2;
+                    hexOutline.position.y = -animProgress * 2 + 0.05;
+                    hexOutline.material.color.setHex(0x00ff88);
+                } else {
+                    clearInterval(animInterval);
+                    
+                    // Remove hex, create void hole
+                    portal.remove(hexMesh);
+                    portal.remove(hexOutline);
+
+                    // Create black void
+                    const voidGeometry = new THREE.CircleGeometry(2, 32);
+                    const voidMaterial = new THREE.MeshBasicMaterial({ 
+                        color: 0x000000,
+                        side: THREE.DoubleSide
+                    });
+                    const voidMesh = new THREE.Mesh(voidGeometry, voidMaterial);
+                    voidMesh.rotation.x = -Math.PI / 2;
+                    portal.add(voidMesh);
+
+                    // Matrix streams
+                    createMatrixStreams();
+                    
+                    gameState.canEnterPortal = true;
+                }
+            }, 50);
+        }
+
+        function createMatrixStreams() {
+            const streamCount = 4;
+            const positions = [
+                { x: 2, z: 0 },
+                { x: -2, z: 0 },
+                { x: 0, z: 2 },
+                { x: 0, z: -2 }
+            ];
+
+            positions.forEach((pos, i) => {
+                const streamGeometry = new THREE.CylinderGeometry(0.05, 0.05, 3, 8);
+                const streamMaterial = new THREE.MeshBasicMaterial({ 
+                    color: 0x00ff88,
+                    transparent: true,
+                    opacity: 0.7
+                });
+                const stream = new THREE.Mesh(streamGeometry, streamMaterial);
+                stream.position.set(pos.x, 1.5, pos.z);
+                stream.userData = {
+                    startX: pos.x,
+                    startZ: pos.z,
+                    progress: 0
+                };
+                portal.add(stream);
+                portalParticles.push(stream);
+            });
+        }
+
+        function updateMatrixStreams() {
+            portalParticles.forEach(stream => {
+                stream.userData.progress += 0.02;
+                const progress = Math.min(stream.userData.progress, 1);
+                
+                // Move toward center
+                stream.position.x = stream.userData.startX * (1 - progress);
+                stream.position.z = stream.userData.startZ * (1 - progress);
+                stream.position.y = 1.5 - progress * 1;
+                stream.scale.y = 1 - progress * 0.5;
+
+                if (progress >= 1) {
+                    stream.userData.progress = 0;
+                }
+            });
+        }
+        function checkPortalEntry() {
+    if (!gameState.canEnterPortal) return;
+
+    const distance = player.position.distanceTo(portal.position);
+
+    if (distance < PORTAL_TRIGGER_RADIUS) {
+        enterPortal();
+    }
+}
+
+        function setupEventListeners() {
+
+           
+            // Keyboard
+            document.addEventListener('keydown', (e) => {
+                gameState.keys[e.key.toLowerCase()] = true;
+                // Hotbar selection (1–9)
+if (e.key >= '1' && e.key <= '9') {
+    gameState.selectedSlot = parseInt(e.key) - 1;
+    updateHeldItemFromHotbar();
+}
+
+                if (e.key.toLowerCase() === 'e') {
+                    handleInteraction();
+                }
+                if (e.key === ' ') {
+                    if (!gameState.isJumping) {
+                        gameState.velocity.y = JUMP_FORCE;
+                        gameState.isJumping = true;
+                    }
+                }
+            });
+
+            document.addEventListener('keyup', (e) => {
+                gameState.keys[e.key.toLowerCase()] = false;
+            });
+
+            // Mouse movement
+            document.addEventListener('mousemove', (e) => {
+                if (document.pointerLockElement === document.body) {
+                    gameState.mouseMovement.x += e.movementX;
+                    gameState.mouseMovement.y += e.movementY;
+                }
+            });
+
+            // Window resize
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+        document.addEventListener('mousedown', (e) => {
+    if (document.pointerLockElement !== document.body) return;
+
+    // LEFT CLICK — collect chip
+    if (e.button === 0) {
+        tryCollectChip();
+    }
+
+    // RIGHT CLICK — scan (scanner required)
+    if (e.button === 2) {
+        if (!gameState.scannerCrafted) {
+            showNotification('Scanner not crafted');
+            return;
+        }
+        tryScanFragment();
+        tryScanCreature();
+    }
+});
+
+
+// Disable context menu
+document.addEventListener('contextmenu', e => e.preventDefault());
+
+function tryScanFragment() {
+
+    if (!gameState.scannerCrafted) {
+    showNotification('Scanner not crafted');
+    return;
+}
+
+    raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+
+    const intersects = raycaster.intersectObjects(fragments, true);
+
+    if (intersects.length === 0) return;
+
+    const hit = intersects[0].object;
+
+    // Walk up to the fragment root
+    let fragment = hit;
+    while (fragment && !fragment.userData.type) {
+        fragment = fragment.parent;
+    }
+
+    if (!fragment || fragment.userData.type !== 'fragment') return;
+    if (fragment.userData.scanned) return;
+
+    const distance = player.position.distanceTo(fragment.position);
+    if (distance > 4) {
+        showNotification('Fragment out of range');
+        return;
+    }
+
+    scanFragment(fragment);
+}
+function tryCollectChip() {
+    raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+    const intersects = raycaster.intersectObjects(chips, true);
+
+    if (intersects.length === 0) return;
+
+    let chip = intersects[0].object;
+
+    // 🔧 Walk up to root chip
+    while (chip && !chip.userData?.type) {
+        chip = chip.parent;
+    }
+
+    if (!chip || chip.userData.type !== 'chip') return;
+
+    const distance = player.position.distanceTo(chip.position);
+    if (distance > 3) {
+        showNotification('Too far to collect');
+        return;
+    }
+
+    collectChip(chip);
+}
+
+
+function tryScanCreature() {
+    if (!gameState.scannerCrafted) return;
+
+    raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+    const intersects = raycaster.intersectObjects(creatures, true);
+
+    if (intersects.length === 0) return;
+
+    let obj = intersects[0].object;
+    while (obj && !obj.userData.scannable) {
+        obj = obj.parent;
+    }
+
+    if (!obj) return;
+
+    showNotification(`Scanned: ${obj.userData.scanName}`);
+}
+
+        function handleInteraction() {
+
+            // === HANDLE HELD POWER GENERATOR ===
+if (gameState.heldItem === 'powerGenerator') {
+
+    raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+    const hits = raycaster.intersectObjects(portal.children, true);
+
+    const socketHit = hits.find(h =>
+        h.object.userData.type === 'generatorSocket'
+    );
+
+    // 🔌 INSERT INTO SOCKET
+    if (socketHit && !portal.userData.generatorInserted) {
+
+        powerGenerator.position.copy(socketHit.object.getWorldPosition(new THREE.Vector3()));
+        powerGenerator.visible = true;
+        powerGenerator.userData.pickable = false;
+
+        portal.userData.generatorInserted = true;
+        gameState.generatorPlaced = true;
+
+        gameState.hotbar[gameState.selectedSlot] = null;
+        gameState.heldItem = null;
+
+        updateHeldItemFromHotbar();
+        activatePortal();
+        showNotification('Power Generator Installed');
+        return;
+    }
+
+   // 📦 DROP IN FRONT OF PLAYER (GROUND-AWARE)
+const forward = new THREE.Vector3();
+camera.getWorldDirection(forward);
+
+const dropPos = player.position.clone().add(forward.multiplyScalar(1.5));
+
+// find ground at that spot
+const groundY = getGroundHeight(dropPos.x, dropPos.z);
+
+// generator is 1.5 tall → half = 0.75
+powerGenerator.position.set(
+    dropPos.x,
+    groundY + 0.75,
+    dropPos.z
+);
+
+powerGenerator.visible = true;
+powerGenerator.userData.pickable = true;
+
+
+    gameState.hotbar[gameState.selectedSlot] = null;
+    gameState.heldItem = null;
+
+    updateHeldItemFromHotbar();
+    showNotification('Power Generator Dropped');
+    return;
+}
+
+
+    // === SCANNER CRAFTING ===
+    if (
+        gameState.scannerUnlocked &&
+        !gameState.scannerCrafted &&
+        gameState.chips >= 20
+    ) {
+        gameState.chips -= 20;
+        
+        document.getElementById('chip-count').textContent = gameState.chips;
+        gameState.scannerCrafted = true;
+
+// Add scanner to first empty hotbar slot
+const slot = gameState.hotbar.findIndex(s => s === null);
+if (slot !== -1) {
+    gameState.hotbar[slot] = 'scanner';
+    gameState.selectedSlot = slot;
+    updateHeldItemFromHotbar();
+}
+
+showNotification('Scanner Crafted');
+
+        return;
+    }
+
+    // Scanner required beyond this point
+    if (!gameState.scannerCrafted) return;
+    // === FRAGMENT SCANNING ===
+    tryScanFragment();
+
+// === PICK UP POWER GENERATOR ===
+if (
+    powerGenerator &&
+    powerGenerator.userData.pickable &&
+    !gameState.hotbar.includes('powerGenerator')
+) {
+    const dist = player.position.distanceTo(powerGenerator.position);
+    if (dist < 3) {
+        if (addItemToHotbar('powerGenerator')) {
+            powerGenerator.visible = false;
+            powerGenerator.userData.pickable = false;
+            showNotification('Power Generator added to inventory');
+        }
+        return;
+    }
+}
+
+
+
+
+
+                // === POWER GENERATOR CRAFTING ===
+    if (
+        gameState.generatorBlueprintUnlocked &&
+        !gameState.generatorCrafted &&
+        gameState.chips >= 1
+    ) {
+        gameState.chips -= 1;
+        gameState.generatorCrafted = true;
+        document.getElementById('chip-count').textContent = gameState.chips;
+        showNotification('Power Generator Crafted');
+        return;
+    }
+
+
+}
+
+            
+
+    
+        
+        function scanFragment(fragment) {
+            fragment.userData.scanned = true;
+            gameState.fragmentsScanned++;
+            
+            // Visual feedback
+            fragment.material.opacity = 0.8;
+            fragment.material.color.setHex(0x00ff88);
+            
+            document.getElementById('fragment-count').textContent = gameState.fragmentsScanned;
+            showNotification('Fragment Scanned: Data Retrieved');
+
+            // Scanner animation
+            const scanner = document.getElementById('scanner-indicator');
+            scanner.classList.add('active');
+            setTimeout(() => scanner.classList.remove('active'), 1000);
+
+            // Check if all fragments scanned
+           if (gameState.fragmentsScanned >= gameState.totalFragments) {
+    gameState.generatorBlueprintUnlocked = true;
+    showNotification('Power Generator Blueprint Unlocked');
+}
+
+}
+
+        function activatePowerGenerator() {
+
+    if (!gameState.generatorCrafted) {
+        showNotification('Power Generator not crafted');
+        return;
+    }
+
+    if (gameState.fragmentsScanned < gameState.totalFragments) {
+        showNotification('Insufficient data. Scan all fragments first.');
+        return;
+    }
+
+
+            gameState.powerGeneratorActivated = true;
+            powerGenerator.userData.activated = true;
+            
+            // Visual activation
+            powerGenerator.userData.innerGlow.material.opacity = 0.6;
+            powerGenerator.material.emissive.setHex(0x00ffff);
+            powerGenerator.material.emissiveIntensity = 0.8;
+
+            showNotification('Power Generator Activated');
+            
+            setTimeout(() => {
+                
+                showNotification('Portal is now active');
+            }, 2000);
+        }
+
+function enterPortal() {
+    if (gameState.enteringPortal) return;
+    gameState.enteringPortal = true;
+
+    showNotification('Entering the Portal...');
+    gameState.canEnterPortal = false;
+
+    let fallSpeed = 0;
+
+    const fallInterval = setInterval(() => {
+        fallSpeed += 0.03;
+        player.position.y -= fallSpeed;
+        camera.rotation.x += 0.01;
+
+        if (player.position.y < -30) {
+            clearInterval(fallInterval);
+            window.location.href = 'level_two.html';
+        }
+    }, 16);
+}
+
+
+        function collectChip(chip) {
+    gameState.chips++;
+
+    document.getElementById('chip-count').textContent = gameState.chips;
+
+    // First chip discovery
+if (gameState.chips === 1 && !gameState.scannerUnlocked) {
+    showNotification('New Blueprint Discovered: SCANNER');
+}
+
+// Unlock scanner blueprint
+if (
+    gameState.chips >= 20 &&
+    !gameState.scannerUnlocked &&
+    !gameState.scannerCrafted
+) {
+    gameState.scannerUnlocked = true;
+    showNotification('Scanner Blueprint Ready. Craft it.');
+}
+
+
+    // Chip collection animation
+    const targetPos = player.position.clone();
+    const startPos = chip.position.clone();
+    let progress = 0;
+
+    const collectInterval = setInterval(() => {
+        progress += 0.1;
+        chip.position.lerpVectors(startPos, targetPos, progress);
+        chip.scale.multiplyScalar(0.9);
+        chip.material.opacity *= 0.9;
+
+        if (progress >= 1) {
+            clearInterval(collectInterval);
+            scene.remove(chip);
+            chips.splice(chips.indexOf(chip), 1);
+        }
+    }, 16);
+}
+
+        function updatePlayer(delta) {
+            // Mouse look
+            const rotationSpeed = 0.002;
+            player.rotation.y -= gameState.mouseMovement.x * rotationSpeed;
+            camera.rotation.x -= gameState.mouseMovement.y * rotationSpeed;
+            camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
+            gameState.mouseMovement.x = 0;
+            gameState.mouseMovement.y = 0;
+
+            // Movement
+            const moveVector = new THREE.Vector3();
+            if (gameState.keys['w']) moveVector.z -= 1;
+            if (gameState.keys['s']) moveVector.z += 1;
+            if (gameState.keys['a']) moveVector.x -= 1;
+            if (gameState.keys['d']) moveVector.x += 1;
+
+            if (moveVector.length() > 0) {
+                moveVector.normalize();
+                moveVector.applyQuaternion(player.quaternion);
+                const isSneaking = gameState.keys['shift'];
+
+const speed = MOVE_SPEED * (isSneaking ? SNEAK_MULTIPLIER : 1);
+
+player.position.x += moveVector.x * speed * delta;
+player.position.z += moveVector.z * speed * delta;
+
+// Camera height adjust
+camera.position.y = PLAYER_HEIGHT - (isSneaking ? SNEAK_CAMERA_OFFSET : 0);
+
+            }
+
+            // Gravity
+            gameState.velocity.y += GRAVITY * delta;
+            player.position.y += gameState.velocity.y * delta;
+
+            // Ground collision (simple)
+            const groundY = getGroundHeight(player.position.x, player.position.z);
+            if (player.position.y <= groundY) {
+                player.position.y = groundY;
+                gameState.velocity.y = 0;
+                gameState.isJumping = false;
+            }
+
+
+            // Portal proximity
+            if (gameState.canEnterPortal) {
+                const distance = player.position.distanceTo(portal.position);
+                if (distance < 5) {
+                    document.getElementById('portal-message').classList.add('show');
+                } else {
+                    document.getElementById('portal-message').classList.remove('show');
+                }
+            }
+        }
+
+        function getGroundHeight(x, z) {
+            let maxY = 0;
+            platforms.forEach(platform => {
+                const mesh = platform.mesh;
+                const halfWidth = mesh.geometry.parameters.width / 2;
+                const halfDepth = mesh.geometry.parameters.depth / 2;
+                
+                if (x >= mesh.position.x - halfWidth && x <= mesh.position.x + halfWidth &&
+                    z >= mesh.position.z - halfDepth && z <= mesh.position.z + halfDepth) {
+                    maxY = Math.max(maxY, mesh.position.y + 0.15);
+                }
+            });
+            return maxY;
+        }
+
+        function updateChips(delta) {
+            chips.forEach(chip => {
+                chip.rotation.y += chip.userData.rotation;
+                chip.position.y = chip.userData.baseY + Math.sin(Date.now() * 0.001 + chip.userData.floatOffset) * 0.1;
+            });
+        }
+
+        function updateFragments(delta) {
+            fragments.forEach(fragment => {
+                fragment.rotation.y += fragment.userData.rotation;
+                fragment.rotation.x += fragment.userData.rotation * 0.5;
+            });
+        }
+
+        function updateCreatures(delta) {
+            creatures.forEach(creature => {
+                creature.userData.changeDirectionTimer -= delta;
+                
+                if (creature.userData.changeDirectionTimer <= 0) {
+                    creature.userData.direction = new THREE.Vector3(
+                        Math.random() - 0.5, 
+                        0, 
+                        Math.random() - 0.5
+                    ).normalize();
+                    creature.userData.changeDirectionTimer = Math.random() * 3 + 2;
+                }
+
+                const moveAmount = creature.userData.moveSpeed * delta;
+                creature.position.x += creature.userData.direction.x * moveAmount;
+                creature.position.z += creature.userData.direction.z * moveAmount;
+
+                // Simple boundary
+                if (Math.abs(creature.position.x) > 30 || Math.abs(creature.position.z) > 30) {
+                    creature.userData.direction.multiplyScalar(-1);
+                }
+
+                // Rotate to face direction
+                const angle = Math.atan2(creature.userData.direction.x, creature.userData.direction.z);
+                creature.rotation.y = angle;
+            });
+        }
+
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+    function updateHeldItemFromHotbar() {
+    gameState.heldItem = gameState.hotbar[gameState.selectedSlot];
+
+    const slots = document.querySelectorAll('#hotbar .slot');
+    slots.forEach((slot, i) => {
+        slot.classList.toggle('selected', i === gameState.selectedSlot);
+        if (gameState.hotbar[i] === 'scanner') slot.textContent = '📡';
+else if (gameState.hotbar[i] === 'powerGenerator') slot.textContent = '⬛';
+else slot.textContent = '';
+
+    });
+}
+
+
+        function animate() {
+            
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+
+            updatePlatformGrid();
+            updatePlayer(delta);
+            updateChips(delta);
+            updateFragments(delta);
+            updateCreatures(delta);
+            
+            checkPortalEntry();
+
+            if (gameState.portalActive) {
+                updateMatrixStreams();
+                powerGenerator.rotation.y += 0.01;
+            }
+
+            renderer.render(scene, camera);
+            updateHeldItemVisual();
+
+        }
+
+        // Initialize
+        init();
+    </script>
+</body>
+</html>
