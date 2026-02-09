@@ -376,6 +376,9 @@
             hotbar: new Array(9).fill(null),
             selectedSlot: 0,
             isFabricatorOpen: false,
+            health: 100,
+            hunger: 100,
+            thirst: 100,
 
 
         };
@@ -791,6 +794,8 @@ function createChips() {
     creaturePositions.forEach(pos => {
         createCreature(pos.x, pos.y, pos.z);
     });
+    
+
 }
 
         
@@ -834,6 +839,7 @@ function createChips() {
     // ✅ THIS MUST COME AFTER body EXISTS
     body.userData = {
         type: 'creature',
+        pickable: true,
         scannable: true,
         scanName: 'Digital Crab',
         moveSpeed: 0.5,
@@ -1189,6 +1195,19 @@ function tryCollectChip() {
     collectChip(chip);
 }
 
+function updateVitals(delta) {
+    gameState.hunger -= delta * 0.4;
+    gameState.thirst -= delta * 0.7;
+
+    gameState.hunger = Math.max(0, gameState.hunger);
+    gameState.thirst = Math.max(0, gameState.thirst);
+
+    if (gameState.hunger <= 0 || gameState.thirst <= 0) {
+        gameState.health -= delta * 2;
+    }
+
+    gameState.health = Math.max(0, gameState.health);
+}
 
 function tryScanCreature() {
     if (!gameState.scannerCrafted) return;
@@ -1265,6 +1284,26 @@ powerGenerator.userData.pickable = true;
     updateHeldItemFromHotbar();
     showNotification('Power Generator Dropped');
     return;
+}
+
+raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
+const hits = raycaster.intersectObjects(creatures, true);
+
+if (hits.length) {
+    let c = hits[0].object;
+    while (c && c.userData.type !== 'creature') c = c.parent;
+
+    if (c && c.userData.pickable) {
+        scene.remove(c);
+        creatures.splice(creatures.indexOf(c), 1);
+
+        gameState.foodBlueprintUnlocked = true;
+        gameState.waterBlueprintUnlocked = true;
+
+        showBlueprintHUD('Blueprints Unlocked: Nutrient & Water');
+        showNotification('Creature Sample Acquired');
+        return;
+    }
 }
 
 
@@ -1624,7 +1663,8 @@ else slot.textContent = '';
             updateChips(delta);
             updateFragments(delta);
             updateCreatures(delta);
-            
+            updateVitals(delta);
+
             checkPortalEntry();
 
             if (gameState.portalActive) {
