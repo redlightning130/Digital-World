@@ -61,6 +61,24 @@
             gap: 10px;
             pointer-events: none;
         }
+        .mini {
+            width: 100%;
+            height: 100%;
+        }
+
+        .mini.scanner {
+            background: linear-gradient(45deg, #00ffff, #003333);
+        }
+
+        .mini.generator {
+            background: #00ffff;
+            box-shadow: inset 0 0 10px #000;
+        }
+
+        .mini.creature {
+            background: radial-gradient(circle, #00ffff, #001111);
+            border-radius: 50%;
+        }
 
         .slot {
              width: 50px;
@@ -376,11 +394,10 @@
             hotbar: new Array(9).fill(null),
             selectedSlot: 0,
             isFabricatorOpen: false,
+            uiMode: 'game', // 'game', 'fabricator', future: 'inventory'
             health: 100,
             hunger: 100,
             thirst: 100,
-
-
         };
 
         // Three.js Setup
@@ -391,7 +408,6 @@
         let raycaster, mouse;
         let clock = new THREE.Clock();
         let heldItemMesh = null;
-
 
 
 
@@ -445,7 +461,6 @@
             createChips();       
             createFragments();    
             createCreatures();
-            createPowerGenerator();
             createPortal();
             createFabricator();
 
@@ -460,9 +475,13 @@
             setTimeout(() => {
                 document.getElementById('loading-screen').classList.add('hidden');
                 // Request pointer lock
-                document.body.addEventListener('click', () => {
-                    document.body.requestPointerLock();
-                });
+               document.body.addEventListener('click', () => {
+    if (gameState.uiMode === 'game' && !document.pointerLockElement) {
+        document.body.requestPointerLock();
+    }
+});
+
+
             }, 1500);
         }
 
@@ -481,42 +500,56 @@ function createFabricator() {
 
     scene.add(fabricator);
 }
-function openFabricatorIfLooking() {
-    if (gameState.isFabricatorOpen) return true;
-
-    raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
-    const hits = raycaster.intersectObject(fabricator);
-
-    if (!hits.length) return false;
-
-    document.getElementById('fabricator-ui').style.display = 'block';
-    document.exitPointerLock();
-    populateFabricator();
-
-    gameState.isFabricatorOpen = true;
-    return true;
-}
-
-function closeFabricator() {
-    const ui = document.getElementById('fabricator-ui');
-    ui.style.display = 'none';
-    gameState.isFabricatorOpen = false;
-
-    // Lock mouse again
-    document.body.requestPointerLock();
-}
-
 function populateFabricator() {
     const grid = document.getElementById('fabricator-grid');
     grid.innerHTML = '';
 
     const recipes = [];
 
-    if (gameState.scannerUnlocked)
-        recipes.push({ name: 'Scanner', cost: '20 Chips' });
+    if (gameState.scannerUnlocked && !gameState.scannerCrafted) {
+        recipes.push({
+            name: 'Scanner',
+            cost: 5,
+            craft: () => {
+                if (gameState.chips < 5) {
+                    showNotification('Not enough chips');
+                    return;
+                }
 
-    if (gameState.generatorBlueprintUnlocked)
-        recipes.push({ name: 'Power Generator', cost: '1 Chip' });
+                gameState.chips -= 5;
+                gameState.scannerCrafted = true;
+                document.getElementById('chip-count').textContent = gameState.chips;
+
+                addItemToHotbar('scanner');
+                showNotification('Scanner Crafted');
+            }
+        });
+    }
+
+    if (gameState.generatorBlueprintUnlocked && !gameState.generatorCrafted) {
+        recipes.push({
+            name: 'Power Generator',
+            cost: 10,
+            craft: () => {
+                if (gameState.chips < 10) {
+                    showNotification('Not enough chips');
+                    return;
+                }
+
+                gameState.chips -= 10;
+                gameState.generatorCrafted = true;
+                if (!powerGenerator) {
+                createPowerGenerator();
+                powerGenerator.visible = false;
+                }
+
+                document.getElementById('chip-count').textContent = gameState.chips;
+
+                addItemToHotbar('powerGenerator');
+                showNotification('Power Generator Crafted');
+            }
+        });
+    }
 
     recipes.forEach(item => {
         const el = document.createElement('div');
@@ -525,11 +558,53 @@ function populateFabricator() {
 
         const tip = document.createElement('div');
         tip.className = 'fabricator-tooltip';
-        tip.textContent = item.cost;
+        tip.textContent = item.cost + ' Chips';
         el.appendChild(tip);
+
+        // 🔥 THIS IS THE IMPORTANT PART
+        el.addEventListener('click', item.craft);
 
         grid.appendChild(el);
     });
+}
+
+function enterUIMode(mode) {
+    gameState.uiMode = mode;
+
+    document.exitPointerLock();
+
+    // show UI based on mode
+    if (mode === 'fabricator') {
+        document.getElementById('fabricator-ui').style.display = 'block';
+        populateFabricator();
+    }
+}
+
+function exitUIMode() {
+    gameState.uiMode = 'game';
+
+    // hide ALL UI screens
+    document.getElementById('fabricator-ui').style.display = 'none';
+
+    // lock mouse back
+    document.body.requestPointerLock();
+}
+function tryToggleFabricator() {
+
+    // If already open → CLOSE
+    if (gameState.uiMode === 'fabricator') {
+        exitUIMode();
+        return true;
+    }
+
+    // If in game → try open
+    raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
+    const hits = raycaster.intersectObject(fabricator);
+
+    if (!hits.length) return false;
+
+    enterUIMode('fabricator');
+    return true;
 }
 
 function createHeldScanner() {
@@ -797,6 +872,32 @@ function createChips() {
     
 
 }
+function tryPickupCreature() {
+    raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
+    const hits = raycaster.intersectObjects(creatures, true);
+
+    if (!hits.length) return;
+
+    let c = hits[0].object;
+    while (c && c.userData.type !== 'creature') {
+        c = c.parent;
+    }
+
+    if (!c || !c.userData.pickable) return;
+
+    const dist = player.position.distanceTo(c.position);
+    if (dist > 3) {
+        showNotification('Too far');
+        return;
+    }
+
+    // add to inventory
+    if (addItemToHotbar('creature')) {
+        scene.remove(c);
+        creatures.splice(creatures.indexOf(c), 1);
+        showNotification('Creature collected');
+    }
+}
 
         
 
@@ -836,7 +937,6 @@ function createChips() {
         body.add(eye);
     }
 
-    // ✅ THIS MUST COME AFTER body EXISTS
     body.userData = {
         type: 'creature',
         pickable: true,
@@ -1070,10 +1170,6 @@ generatorSocket.userData.type = 'generatorSocket';
             // Keyboard
             document.addEventListener('keydown', (e) => {
                 gameState.keys[e.key.toLowerCase()] = true;
-                if (gameState.isFabricatorOpen && (e.key === 'f' || e.key.toLowerCase() === 'e')) {
-    closeFabricator();
-    return;
-}
                 // Hotbar selection (1–9)
 if (e.key >= '1' && e.key <= '9') {
     gameState.selectedSlot = parseInt(e.key) - 1;
@@ -1110,20 +1206,37 @@ if (e.key >= '1' && e.key <= '9') {
                 renderer.setSize(window.innerWidth, window.innerHeight);
             });
         }
-       document.addEventListener('mousedown', (e) => {
-    if (document.pointerLockElement !== document.body) return;
+    document.addEventListener('mousedown', (e) => {
+
+    // ===== ALWAYS ALLOW RIGHT CLICK TO CLOSE UI =====
+    if (e.button === 2 && gameState.uiMode === 'fabricator') {
+        exitUIMode();
+        return;
+    }
+
+    // Block everything else if UI is open
+    if (gameState.uiMode !== 'game') return;
+
 
     // LEFT CLICK
     if (e.button === 0) {
         tryCollectChip();
+        tryPickupCreature();
     }
 
     // RIGHT CLICK
-    if (e.button === 2) {
-        // FIRST: fabricator
-        if (openFabricatorIfLooking()) return;
+if (e.button === 2) {
 
-        // THEN: scanner actions
+    // CLOSE if already open
+    if (gameState.uiMode === 'fabricator') {
+        exitUIMode();
+        return;
+    }
+
+    // OPEN if looking at fabricator
+    if (tryToggleFabricator()) return;
+
+        // SCANNER
         if (!gameState.scannerCrafted) {
             showNotification('Scanner not crafted');
             return;
@@ -1133,7 +1246,6 @@ if (e.key >= '1' && e.key <= '9') {
         tryScanCreature();
     }
 });
-
 
 
 // Disable context menu
@@ -1227,7 +1339,10 @@ function tryScanCreature() {
     showNotification(`Scanned: ${obj.userData.scanName}`);
 }
 
-        function handleInteraction() {
+       function handleInteraction() {
+
+
+
 
             // === HANDLE HELD POWER GENERATOR ===
 if (gameState.heldItem === 'powerGenerator') {
@@ -1306,31 +1421,6 @@ if (hits.length) {
     }
 }
 
-
-    // === SCANNER CRAFTING ===
-    if (
-        gameState.scannerUnlocked &&
-        !gameState.scannerCrafted &&
-        gameState.chips >= 20
-    ) {
-        gameState.chips -= 20;
-        
-        document.getElementById('chip-count').textContent = gameState.chips;
-        gameState.scannerCrafted = true;
-
-// Add scanner to first empty hotbar slot
-const slot = gameState.hotbar.findIndex(s => s === null);
-if (slot !== -1) {
-    gameState.hotbar[slot] = 'scanner';
-    gameState.selectedSlot = slot;
-    updateHeldItemFromHotbar();
-}
-
-showNotification('Scanner Crafted');
-
-        return;
-    }
-
     // Scanner required beyond this point
     if (!gameState.scannerCrafted) return;
     // === FRAGMENT SCANNING ===
@@ -1361,9 +1451,9 @@ if (
     if (
         gameState.generatorBlueprintUnlocked &&
         !gameState.generatorCrafted &&
-        gameState.chips >= 1
+        gameState.chips >= 10
     ) {
-        gameState.chips -= 1;
+        gameState.chips -= 10;
         gameState.generatorCrafted = true;
         document.getElementById('chip-count').textContent = gameState.chips;
         showNotification('Power Generator Crafted');
@@ -1479,14 +1569,12 @@ if (gameState.chips === 1 && !gameState.scannerUnlocked) {
 
 }
 
-if (
-    gameState.chips >= 20 &&
-    !gameState.scannerUnlocked &&
-    !gameState.scannerCrafted
-) {
+// Unlock scanner after FIRST chip
+if (!gameState.scannerUnlocked) {
     gameState.scannerUnlocked = true;
-    showBlueprintHUD('Blueprint Unlocked for Scanner');
+    showBlueprintHUD('Blueprint Unlocked: Scanner');
 }
+
 
 
 
@@ -1644,14 +1732,46 @@ camera.position.y = PLAYER_HEIGHT - (isSneaking ? SNEAK_CAMERA_OFFSET : 0);
 
     const slots = document.querySelectorAll('#hotbar .slot');
     slots.forEach((slot, i) => {
-        slot.classList.toggle('selected', i === gameState.selectedSlot);
-        if (gameState.hotbar[i] === 'scanner') slot.textContent = '📡';
-else if (gameState.hotbar[i] === 'powerGenerator') slot.textContent = '⬛';
-else slot.textContent = '';
+    slot.classList.toggle('selected', i === gameState.selectedSlot);
 
-    });
+    const item = gameState.hotbar[i];
+
+    if (item === 'scanner') {
+    slot.innerHTML = '<div class="mini scanner"></div>';
+} 
+else if (item === 'powerGenerator') {
+    slot.innerHTML = '<div class="mini generator"></div>';
+}
+else if (item === 'creature') {
+    slot.innerHTML = '<div class="mini creature"></div>';
+}
+else {
+    slot.innerHTML = '';
 }
 
+
+    // remove old counter
+    const old = slot.querySelector('.count');
+    if (old) old.remove();
+
+    // count items
+    const count = gameState.hotbar.filter(x => x === item).length;
+
+    if (item && count > 1) {
+        const c = document.createElement('div');
+        c.className = 'count';
+        c.textContent = count;
+
+        c.style.position = 'absolute';
+        c.style.bottom = '2px';
+        c.style.right = '4px';
+        c.style.fontSize = '12px';
+        c.style.color = '#00ffff';
+
+        slot.appendChild(c);
+    }
+});
+}
 
         function animate() {
             
