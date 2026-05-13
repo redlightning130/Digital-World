@@ -915,6 +915,14 @@
 
 
         // Constants
+        const currentWorldIndex = parseInt(
+    sessionStorage.getItem('currentWorldIndex')
+);
+
+let savedWorlds =
+    JSON.parse(localStorage.getItem('digitalWorlds')) || [];
+
+let currentWorld = savedWorlds[currentWorldIndex];
         const GRAVITY = -20;
         const JUMP_FORCE = 8;
         const MOVE_SPEED = 5;
@@ -938,7 +946,39 @@
             player.add(camera);
             camera.position.y = PLAYER_HEIGHT;
             scene.add(player);
+            if (
+    currentWorld &&
+    currentWorld.progress &&
+    currentWorld.progress.playerPosition
+) {
 
+    player.position.set(
+        currentWorld.progress.playerPosition.x,
+        currentWorld.progress.playerPosition.y,
+        currentWorld.progress.playerPosition.z
+    );
+
+    gameState.chips =
+        currentWorld.progress.chips || 0;
+
+    gameState.fragmentsScanned =
+        currentWorld.progress.fragmentsScanned || 0;
+
+    gameState.scannerCrafted =
+        currentWorld.progress.scannerCrafted || false;
+
+    gameState.generatorCrafted =
+        currentWorld.progress.generatorCrafted || false;
+
+    gameState.generatorPlaced =
+        currentWorld.progress.generatorPlaced || false;
+
+    document.getElementById('chip-count').textContent =
+        gameState.chips;
+
+    document.getElementById('fragment-count').textContent =
+        gameState.fragmentsScanned;
+}
             // Renderer
             renderer = new THREE.WebGLRenderer({ 
                 canvas: document.getElementById('gameCanvas'),
@@ -987,7 +1027,32 @@
 
             }, 1500);
         }
+function saveWorld() {
 
+    if (!currentWorld) return;
+
+    currentWorld.progress = {
+
+        chips: gameState.chips,
+        fragmentsScanned: gameState.fragmentsScanned,
+        scannerCrafted: gameState.scannerCrafted,
+        generatorCrafted: gameState.generatorCrafted,
+        generatorPlaced: gameState.generatorPlaced,
+
+        playerPosition: {
+            x: player.position.x,
+            y: player.position.y,
+            z: player.position.z
+        }
+    };
+
+    savedWorlds[currentWorldIndex] = currentWorld;
+
+    localStorage.setItem(
+        'digitalWorlds',
+        JSON.stringify(savedWorlds)
+    );
+}
         let fabricator;
 
 function createFabricator() {
@@ -2149,6 +2214,7 @@ function addItemToHotbar(item) {
                         side: THREE.DoubleSide
                     });
                     const voidMesh = new THREE.Mesh(voidGeometry, voidMaterial);
+                    voidMesh.userData.isPortalVoid = true;
                     voidMesh.rotation.x = -Math.PI / 2;
                     portal.add(voidMesh);
 
@@ -2205,12 +2271,20 @@ function addItemToHotbar(item) {
             });
         }
         function checkPortalEntry() {
+
+    // only active after portal powered
     if (!gameState.canEnterPortal) return;
 
-    const distance = player.position.distanceTo(portal.position);
+    // fell deep enough into portal
+    if (player.position.y < -15) {
 
-    if (distance < PORTAL_TRIGGER_RADIUS) {
-        enterPortal();
+        gameState.canEnterPortal = false;
+
+        showNotification('Entering Level 2...');
+
+        setTimeout(() => {
+            window.location.href = 'level_two.html';
+        }, 1000);
     }
 }
 
@@ -2638,28 +2712,6 @@ if (
             }, 2000);
         }
 
-function enterPortal() {
-    if (gameState.enteringPortal) return;
-    gameState.enteringPortal = true;
-
-    showNotification('Entering the Portal...');
-    gameState.canEnterPortal = false;
-
-    let fallSpeed = 0;
-
-    const fallInterval = setInterval(() => {
-        fallSpeed += 0.03;
-        player.position.y -= fallSpeed;
-        camera.rotation.x += 0.01;
-
-        if (player.position.y < -30) {
-            clearInterval(fallInterval);
-            window.location.href = 'level_two.html';
-        }
-    }, 16);
-}
-
-
         function collectChip(chip) {
     gameState.chips++;
 
@@ -2778,7 +2830,19 @@ camera.position.y = PLAYER_HEIGHT - (isSneaking ? SNEAK_CAMERA_OFFSET : 0);
        function getGroundHeight(x, z) {
 
     let maxY = 0;
+// Portal hole
+if (gameState.portalActive) {
 
+    const dx = x - portal.position.x;
+    const dz = z - portal.position.z;
+
+    const dist = Math.sqrt(dx * dx + dz * dz);
+
+    // hole radius
+    if (dist < 2) {
+        return -100;
+    }
+}
     // Platforms
     platforms.forEach(platform => {
 
@@ -2806,7 +2870,7 @@ camera.position.y = PLAYER_HEIGHT - (isSneaking ? SNEAK_CAMERA_OFFSET : 0);
 
     // Collision objects
     collisionMeshes.forEach(mesh => {
-
+        if (mesh.userData.isPortalVoid) return;
         if (!mesh || !mesh.geometry) return;
 
         const pos = new THREE.Vector3();
@@ -3002,6 +3066,7 @@ function checkCollision(x, y, z) {
             }
 
             renderer.render(scene, camera);
+            saveWorld();
             updateHeldItemVisual();
 
         }
