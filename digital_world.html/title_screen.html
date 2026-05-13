@@ -167,6 +167,8 @@ Title screen alpha:
             width: 80px;
             height: 80px;
             background: linear-gradient(135deg, #001a1a, #003333);
+            background-size: cover;
+            background-position: center;
             border: 2px solid #00ffff;
             border-radius: 5px;
             margin-right: 20px;
@@ -252,6 +254,35 @@ Title screen alpha:
             border-color: #00ffff;
             background: rgba(0, 100, 100, 0.5);
             box-shadow: 0 0 30px rgba(0, 255, 255, 0.7);
+        }
+
+        .seed-row {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 20px 0 10px;
+            width: 100%;
+            max-width: 520px;
+        }
+
+        #world-seed-input, #world-name-input {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 8px;
+            border: 2px solid #00ffff;
+            background: rgba(0, 10, 10, 0.9);
+            color: #00ffff;
+            font-size: 16px;
+        }
+
+        #world-seed-input::placeholder, #world-name-input::placeholder {
+            color: rgba(0, 255, 255, 0.5);
+        }
+
+        .seed-row label {
+            color: #00ffff;
+            font-size: 14px;
+            letter-spacing: 0.15em;
         }
 
         .mode-title {
@@ -383,6 +414,14 @@ Title screen alpha:
                     One life. Permanent death. Face the ultimate challenge in the simulation.
                 </div>
             </div>
+        </div>
+        <div class="seed-row">
+            <label for="world-name-input">World Name</label>
+            <input type="text" id="world-name-input" placeholder="Enter a custom world name">
+        </div>
+        <div class="seed-row">
+            <label for="world-seed-input">World Seed</label>
+            <input type="text" id="world-seed-input" placeholder="Leave blank for random seed">
         </div>
         <div class="world-buttons">
             <button class="btn" id="create-world-confirm-btn" disabled>Create World</button>
@@ -584,7 +623,8 @@ document.getElementById('render-distance').addEventListener('input', (e) => {
                         <div class="world-details">
                             Created: ${world.created}<br>
                             Mode: ${world.mode.toUpperCase()}<br>
-                            Level: ${world.level || 1}
+                            Level: ${world.level || 1}<br>
+                            Seed: ${world.seed ?? 'random'}
                         </div>
                     </div>
                 `;
@@ -598,6 +638,10 @@ document.getElementById('render-distance').addEventListener('input', (e) => {
                     updateWorldButtons();
                 });
                 
+                const thumbnailDiv = worldItem.querySelector('.world-thumbnail');
+                if (world.progress && world.progress.thumbnail) {
+                    thumbnailDiv.style.backgroundImage = `url('${world.progress.thumbnail}')`;
+                }
                 worldList.appendChild(worldItem);
             });
         }
@@ -612,6 +656,8 @@ document.getElementById('render-distance').addEventListener('input', (e) => {
         // Create New World
         document.getElementById('create-world-btn').addEventListener('click', () => {
             gameState.selectedMode = null;
+            document.getElementById('world-name-input').value = '';
+            document.getElementById('world-seed-input').value = '';
             document.querySelectorAll('.mode-card').forEach(card => {
                 card.classList.remove('selected');
             });
@@ -630,8 +676,22 @@ document.getElementById('render-distance').addEventListener('input', (e) => {
         });
         
         // Create World Confirm
+        function hashSeedString(value) {
+            let hash = 0;
+            for (let i = 0; i < value.length; i++) {
+                hash = ((hash << 5) - hash) + value.charCodeAt(i);
+                hash |= 0;
+            }
+            return Math.abs(hash);
+        }
+
         document.getElementById('create-world-confirm-btn').addEventListener('click', () => {
-            const worldName = `New World ${gameState.worlds.length + 1}`;
+            const nameInput = document.getElementById('world-name-input').value.trim();
+            const worldName = nameInput || `New World ${gameState.worlds.length + 1}`;
+            const seedInput = document.getElementById('world-seed-input').value.trim();
+            const seed = seedInput
+                ? hashSeedString(seedInput)
+                : Math.floor(Math.random() * 1000000000);
             const now = new Date();
             const dateStr = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear().toString().slice(2)} ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')} ${now.getHours() >= 12 ? 'PM' : 'AM'}`;
             
@@ -640,10 +700,12 @@ document.getElementById('render-distance').addEventListener('input', (e) => {
                 created: dateStr,
                 mode: gameState.selectedMode,
                 level: 1,
+                seed,
                 progress: {}
             };
             
             gameState.worlds.push(newWorld);
+            gameState.selectedWorld = gameState.worlds.length - 1;
             localStorage.setItem('digitalWorlds', JSON.stringify(gameState.worlds));
             
             // Start game loading
@@ -709,15 +771,14 @@ document.getElementById('render-distance').addEventListener('input', (e) => {
                     clearInterval(loadingInterval);
                     
                     setTimeout(() => {
-                        // Save selected world/mode to sessionStorage
+                            // Save selected world index to sessionStorage
                         if (gameState.selectedWorld !== null) {
-                            sessionStorage.setItem('currentWorld', JSON.stringify(gameState.worlds[gameState.selectedWorld]));
+                            sessionStorage.setItem('currentWorldIndex', gameState.selectedWorld);
+                            localStorage.setItem('digitalWorlds', JSON.stringify(gameState.worlds));
                         } else {
-                            sessionStorage.setItem('currentWorld', JSON.stringify({
-                                name: `New World ${gameState.worlds.length}`,
-                                mode: gameState.selectedMode,
-                                level: 1
-                            }));
+                            const newIndex = gameState.worlds.length - 1;
+                            sessionStorage.setItem('currentWorldIndex', newIndex);
+                            localStorage.setItem('digitalWorlds', JSON.stringify(gameState.worlds));
                         }
                         
                         // Redirect to level 1

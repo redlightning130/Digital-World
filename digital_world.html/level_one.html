@@ -323,6 +323,451 @@
     display: block;
 }
 
+        /* ===== INVENTORY UI ===== */
+        #inventory-ui {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: min(92vw, 820px);
+            height: min(88vh, 720px);
+            transform: translate(-50%, -50%);
+            background: rgba(0, 10, 10, 0.98);
+            border: 3px solid #00ffff;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.4);
+            display: none;
+            pointer-events: auto;
+            z-index: 500;
+            color: #00ff88;
+        }
+
+        #inventory-ui.visible {
+            display: block;
+        }
+
+        .inventory-header {
+            display: flex;
+            gap: 10px;
+            padding: 16px;
+        }
+
+        .inventory-tab {
+            flex: 1;
+            background: rgba(0, 20, 20, 0.9);
+            border: 2px solid #00ffff;
+            border-radius: 8px;
+            padding: 14px 0;
+            text-align: center;
+            font-size: 16px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .inventory-tab.active {
+            background: #00ff88;
+            color: #001a1a;
+            border-color: #00ff88;
+            box-shadow: 0 0 18px #00ff88;
+        }
+
+        .inventory-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            border: 2px solid #00ffff;
+            background: rgba(0, 0, 0, 0.9);
+            color: #00ff88;
+            padding: 10px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .inventory-content {
+            padding: 0 18px 18px;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 16px;
+            height: calc(100% - 82px);
+        }
+
+        .inventory-panel {
+            background: rgba(0, 10, 10, 0.95);
+            border: 2px solid #00ffff;
+            padding: 14px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .inventory-grid,
+        .inventory-hotbar {
+            display: grid;
+            grid-template-columns: repeat(10, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .inventory-slot {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            background: rgba(0, 20, 20, 0.9);
+            border: 2px solid #00ffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .inventory-slot.empty:hover {
+            background: rgba(0, 40, 40, 0.95);
+        }
+
+        .inventory-slot.selected {
+            border-color: #00ff88;
+            box-shadow: 0 0 14px #00ff88;
+        }
+
+        .item-icon {
+            width: 70%;
+            height: 70%;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .item-icon.scanner {
+            background: linear-gradient(135deg, #00ffff, #003333);
+            box-shadow: inset 0 0 10px #00ff88;
+        }
+
+        .item-icon.powerGenerator {
+            background: linear-gradient(135deg, #00ff88, #002a1a);
+            box-shadow: inset 0 0 10px #00ff88;
+        }
+
+        .item-icon.creature {
+            background: radial-gradient(circle, #00ffff, #001111);
+            border-radius: 50%;
+            box-shadow: inset 0 0 8px #00ff88;
+        }
+
+        .inventory-subtitle {
+            font-size: 14px;
+            letter-spacing: 0.15em;
+            color: #00ff88;
+            padding-left: 4px;
+        }
+
+        .inventory-helper {
+            color: #00ff88;
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .small-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 20, 20, 0.95);
+            border: 2px solid #00ffff;
+            color: #00ff88;
+            padding: 12px 14px;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+
+        .small-button:hover {
+            background: rgba(0, 40, 40, 0.95);
+        }
+
+        #drones-ui {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        #drone-add-state {
+            background: rgba(0, 20, 20, 0.9);
+            border: 2px solid #00ffff;
+            padding: 14px;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        #equipment-ui {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+            align-items: center;
+            justify-items: center;
+        }
+
+        .equip-column {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .equip-slot {
+            width: 64px;
+            height: 64px;
+            background: rgba(0, 20, 20, 0.95);
+            border: 2px solid #00ffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            border-radius: 12px;
+        }
+
+        .equip-slot::before {
+            content: '';
+            display: block;
+        }
+
+        .equip-slot.helmet::before {
+            width: 42px;
+            height: 30px;
+            background: radial-gradient(circle at 50% 20%, #00ffff 30%, #003333 100%);
+            border-radius: 50% 50% 40% 40%;
+        }
+
+        .equip-slot.breastplate::before {
+            width: 38px;
+            height: 42px;
+            background: linear-gradient(180deg, #00ff88 20%, #003333 100%);
+            border-radius: 16px;
+        }
+
+        .equip-slot.pants::before {
+            width: 34px;
+            height: 38px;
+            background: linear-gradient(180deg, #00ffff 20%, #001111 100%);
+            border-radius: 18px 18px 10px 10px;
+        }
+
+        .equip-slot.boots::before {
+            width: 40px;
+            height: 24px;
+            background: linear-gradient(180deg, #00ff88 20%, #001111 100%);
+            border-radius: 12px;
+        }
+
+        .equip-slot.glove::before {
+            width: 26px;
+            height: 26px;
+            border: 2px solid #00ffff;
+            border-radius: 50%;
+            box-shadow: inset 0 0 8px #00ff88;
+        }
+
+        .equip-slot.chip::before {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #00ff88, #002a1a);
+            border-radius: 8px;
+            box-shadow: inset 0 0 8px #00ff88;
+        }
+
+        #databank-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
+        .databank-entry {
+            background: rgba(0, 20, 20, 0.9);
+            border: 2px solid #00ffff;
+            padding: 12px;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+
+        .databank-entry.unlocked {
+            border-color: #00ff88;
+        }
+
+        .databank-entry.selected {
+            box-shadow: 0 0 14px #00ff88;
+        }
+
+        #databank-preview {
+            flex: 1;
+            background: rgba(0, 10, 10, 0.95);
+            border: 2px solid #00ffff;
+            padding: 14px;
+            min-height: 180px;
+            border-radius: 8px;
+        }
+
+        #databank-notice {
+            position: fixed;
+            right: 20px;
+            top: 20px;
+            background: rgba(0, 20, 20, 0.95);
+            border: 2px solid #00ff88;
+            padding: 14px 18px;
+            color: #00ff88;
+            transform: translateX(120%);
+            transition: transform 0.4s ease;
+            z-index: 510;
+        }
+
+        #databank-notice.show {
+            transform: translateX(0);
+        }
+
+        /* Pause Menu */
+        #pause-menu {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 10, 10, 0.98);
+    border: 3px solid #00ffff;
+    padding: 50px 45px;
+    text-align: center;
+
+    display: none;
+
+    z-index: 600;
+    box-shadow: 0 0 50px rgba(0, 255, 255, 0.5);
+    pointer-events: auto;
+    border-radius: 20px;
+    width: 320px;
+    min-height: 400px;
+
+    flex-direction: column;
+    justify-content: center;
+    gap: 25px;
+}
+
+        #pause-menu.visible {
+            display: flex;
+        }
+
+        /* Death Screen */
+        #death-screen {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(20, 0, 0, 0.98);
+            border: 3px solid #ff3333;
+            padding: 40px 60px;
+            text-align: center;
+            display: none;
+            z-index: 600;
+            box-shadow: 0 0 50px rgba(255, 51, 51, 0.5);
+            pointer-events: auto;
+        }
+
+        #death-screen.visible {
+            display: block;
+        }
+
+        .status-label {
+            color: #00ffff;
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            text-shadow: 0 0 20px #00ffff;
+        }
+
+        #death-screen .status-label {
+            color: #ff3333;
+            text-shadow: 0 0 20px #ff3333;
+        }
+
+        .menu-button {
+            background: rgba(0, 20, 20, 0.95);
+            border: 2px solid #00ffff;
+            color: #00ff88;
+            padding: 15px 40px;
+            margin: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+        }
+
+        .menu-button:hover {
+            background: rgba(0, 40, 40, 0.95);
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.6);
+            transform: scale(1.05);
+        }
+
+        #death-screen .menu-button {
+            border-color: #ff3333;
+            color: #ff3333;
+            box-shadow: 0 0 15px rgba(255, 51, 51, 0.3);
+        }
+
+        #death-screen .menu-button:hover {
+            background: rgba(40, 0, 0, 0.95);
+            box-shadow: 0 0 25px rgba(255, 51, 51, 0.6);
+        }
+
+        .status-bars {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            gap: 15px;
+            z-index: 50;
+        }
+
+        .status-block {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .status-block .status-label {
+            position: absolute;
+            font-size: 10px;
+            font-weight: bold;
+            color: #00ffff;
+            text-shadow: 0 0 8px #00ffff;
+            bottom: -20px;
+            white-space: nowrap;
+            margin: 0;
+        }
+
+        .status-bar {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 12px;
+            background: rgba(0, 20, 20, 0.95);
+            border: 2px solid #00ffff;
+            overflow: hidden;
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .status-fill {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #00ff88, #00ffaa);
+            transition: height 0.2s;
+            box-shadow: inset 0 0 15px rgba(0, 255, 136, 0.6), 0 0 10px rgba(0, 255, 136, 0.4);
+            border-radius: 10px;
+        }
+
     </style>
 </head>
 <body>
@@ -346,8 +791,48 @@
         <div class="fragment-counter">
             FRAGMENTS SCANNED: <span id="fragment-count">0</span>/5
         </div>
+        <div id="inventory-ui" class="inventory-ui hidden">
+            <button id="inventory-close" class="inventory-close">×</button>
+            <div class="inventory-header">
+                <div data-tab="inventory" class="inventory-tab active">Inventory</div>
+                <div data-tab="drones" class="inventory-tab">Drones</div>
+                <div data-tab="equipment" class="inventory-tab">Equipment</div>
+                <div data-tab="databank" class="inventory-tab">Databank</div>
+            </div>
+            <div class="inventory-content">
+                <div id="inventory-body" class="inventory-panel"></div>
+                <div id="inventory-side" class="inventory-panel"></div>
+            </div>
+        </div>
+        <div id="databank-notice">New databank entry unlocked</div>
+        <div id="pause-menu">
+            <div class="status-label">Paused</div>
+            <button class="menu-button" id="resume-button">Resume</button>
+            <button class="menu-button" id="options-button">Options</button>
+            <button class="menu-button" id="save-quit-button">Save and Quit</button>
+        </div>
+        <div id="death-screen">
+            <div class="status-label">You Died</div>
+            <button class="menu-button" id="respawn-button">Respawn</button>
+            <button class="menu-button" id="title-button">Title Screen</button>
+        </div>
+        <div class="status-bars">
+            <div class="status-block">
+                <div class="status-label">HEALTH</div>
+                <div class="status-bar"><div class="status-fill" id="health-fill"></div></div>
+            </div>
+            <div class="status-block">
+                <div class="status-label">THIRST</div>
+                <div class="status-bar"><div class="status-fill" id="thirst-fill"></div></div>
+            </div>
+            <div class="status-block">
+                <div class="status-label">HUNGER</div>
+                <div class="status-bar"><div class="status-fill" id="hunger-fill"></div></div>
+            </div>
+        </div>
         <div id="hotbar">
     <div class="slot selected"></div>
+    <div class="slot"></div>
     <div class="slot"></div>
     <div class="slot"></div>
     <div class="slot"></div>
@@ -363,7 +848,7 @@
         <div class="notification" id="notification"></div>
         <div id="blueprint-hud"></div>
         <div class="portal-message" id="portal-message">
-            Press E to enter the Portal
+            Enter the Portal
         </div>
         
 </div>
@@ -390,11 +875,28 @@
             generatorBlueprintUnlocked: false,
             generatorCrafted: false,
             generatorPlaced: false,
+            foodBlueprintUnlocked: false,
+            waterBlueprintUnlocked: false,
+            foodCrafted: false,
+            waterCrafted: false,
+            isDead: false,
             heldItem: null,
-            hotbar: new Array(9).fill(null),
+            hotbar: new Array(10).fill(null),
+            inventory: new Array(50).fill(null),
             selectedSlot: 0,
+            inventoryTab: 'inventory',
+            itemTransfer: null,
+            droneMode: false,
+            selectedDatabankEntry: null,
+            databankEntries: [
+                { id: 'scanner', name: 'Scanner', unlocked: false },
+                { id: 'powerGenerator', name: 'Power Generator', unlocked: false },
+                { id: 'digitalCrab', name: 'Digital Crab', unlocked: false },
+                { id: 'food', name: 'Food', unlocked: false },
+                { id: 'water', name: 'Water', unlocked: false }
+            ],
             isFabricatorOpen: false,
-            uiMode: 'game', // 'game', 'fabricator', future: 'inventory'
+            uiMode: 'game', // 'game', 'fabricator', 'inventory'
             health: 100,
             hunger: 100,
             thirst: 100,
@@ -405,6 +907,7 @@
         let player, playerBody;
         let platforms = [], chips = [], fragments = [], creatures = [];
         let powerGenerator, portal, portalParticles = [];
+        let collisionMeshes = []; // Track all solid objects
         let raycaster, mouse;
         let clock = new THREE.Clock();
         let heldItemMesh = null;
@@ -497,6 +1000,8 @@ function createFabricator() {
     fabricator = new THREE.Mesh(geo, mat);
     fabricator.position.set(0, 0.75, 3);
     fabricator.userData.type = 'fabricator';
+    
+    collisionMeshes.push(fabricator);
 
     scene.add(fabricator);
 }
@@ -522,6 +1027,46 @@ function populateFabricator() {
 
                 addItemToHotbar('scanner');
                 showNotification('Scanner Crafted');
+            }
+        });
+    }
+
+    if (gameState.foodBlueprintUnlocked && !gameState.foodCrafted) {
+        recipes.push({
+            name: 'Food',
+            cost: 4,
+            craft: () => {
+                if (gameState.chips < 4) {
+                    showNotification('Not enough chips');
+                    return;
+                }
+
+                gameState.chips -= 4;
+                gameState.foodCrafted = true;
+                document.getElementById('chip-count').textContent = gameState.chips;
+
+                addItemToHotbar('food');
+                showNotification('Food Crafted');
+            }
+        });
+    }
+
+    if (gameState.waterBlueprintUnlocked && !gameState.waterCrafted) {
+        recipes.push({
+            name: 'Water',
+            cost: 4,
+            craft: () => {
+                if (gameState.chips < 4) {
+                    showNotification('Not enough chips');
+                    return;
+                }
+
+                gameState.chips -= 4;
+                gameState.waterCrafted = true;
+                document.getElementById('chip-count').textContent = gameState.chips;
+
+                addItemToHotbar('water');
+                showNotification('Water Crafted');
             }
         });
     }
@@ -561,11 +1106,379 @@ function populateFabricator() {
         tip.textContent = item.cost + ' Chips';
         el.appendChild(tip);
 
-        // 🔥 THIS IS THE IMPORTANT PART
+        // 🔥 THIS IS THE Important part
         el.addEventListener('click', item.craft);
 
         grid.appendChild(el);
     });
+}
+
+function toggleInventory() {
+    if (gameState.uiMode === 'inventory') {
+        closeInventory();
+    } else {
+        openInventory();
+    }
+}
+
+function openInventory() {
+    gameState.uiMode = 'inventory';
+    gameState.itemTransfer = null;
+    gameState.droneMode = false;
+    document.exitPointerLock();
+
+    const ui = document.getElementById('inventory-ui');
+    ui.classList.add('visible');
+    ui.classList.remove('hidden');
+    renderInventoryUI();
+}
+
+function closeInventory() {
+    gameState.uiMode = 'game';
+    gameState.itemTransfer = null;
+    gameState.droneMode = false;
+
+    const ui = document.getElementById('inventory-ui');
+    ui.classList.remove('visible');
+    ui.classList.add('hidden');
+    document.body.requestPointerLock();
+}
+
+function openPauseMenu() {
+    gameState.uiMode = 'pause';
+    document.exitPointerLock();
+    document.getElementById('pause-menu').classList.add('visible');
+}
+
+function closePauseMenu() {
+    gameState.uiMode = 'game';
+    document.getElementById('pause-menu').classList.remove('visible');
+    document.body.requestPointerLock();
+}
+
+function togglePauseMenu() {
+    if (gameState.uiMode === 'pause') {
+        closePauseMenu();
+    } else if (gameState.uiMode === 'game') {
+        openPauseMenu();
+    }
+}
+
+function showDeathScreen() {
+    gameState.uiMode = 'dead';
+    document.exitPointerLock();
+    
+    const deathScreen = document.getElementById('death-screen');
+    deathScreen.classList.add('visible');
+    
+    // Update buttons based on game mode
+    const respawnBtn = document.getElementById('respawn-button');
+    const titleBtn = document.getElementById('title-button');
+    
+    if (gameState.worldMode === 'hardcore') {
+        respawnBtn.textContent = 'Spectate World';
+        respawnBtn.onclick = () => window.location.href = 'title_screen.html';
+        titleBtn.style.display = 'none';
+    } else {
+        respawnBtn.textContent = 'Respawn';
+        respawnBtn.onclick = respawnPlayer;
+        titleBtn.style.display = 'block';
+    }
+}
+
+function hideDeathScreen() {
+    document.getElementById('death-screen').classList.remove('visible');
+}
+
+function respawnPlayer() {
+    if (gameState.worldMode === 'hardcore') {
+        window.location.href = 'title_screen.html';
+    } else {
+        window.location.reload();
+    }
+}
+
+function returnToTitle() {
+    window.location.href = 'title_screen.html';
+}
+
+function switchInventoryTab(tab) {
+    gameState.inventoryTab = tab;
+    gameState.itemTransfer = null;
+    gameState.droneMode = false;
+    renderInventoryUI();
+}
+
+function renderInventoryUI() {
+    const tabs = document.querySelectorAll('#inventory-ui .inventory-tab');
+    tabs.forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.tab === gameState.inventoryTab);
+        tab.onclick = () => switchInventoryTab(tab.dataset.tab);
+    });
+
+    const body = document.getElementById('inventory-body');
+    const side = document.getElementById('inventory-side');
+    body.innerHTML = '';
+    side.innerHTML = '';
+
+    if (gameState.inventoryTab === 'inventory') {
+        body.innerHTML = `
+            <div class="inventory-subtitle">Hotbar</div>
+            <div id="inventory-hotbar" class="inventory-hotbar"></div>
+            <div class="inventory-subtitle">Backpack</div>
+            <div id="inventory-grid" class="inventory-grid"></div>
+            <div class="inventory-helper">Click an item to pick it up, then click a destination slot to move it.</div>
+        `;
+
+        const hotbarEl = document.getElementById('inventory-hotbar');
+        const gridEl = document.getElementById('inventory-grid');
+
+        gameState.hotbar.forEach((item, index) => {
+            hotbarEl.appendChild(createInventorySlot(item, index, 'hotbar'));
+        });
+
+        gameState.inventory.forEach((item, index) => {
+            gridEl.appendChild(createInventorySlot(item, index, 'inventory'));
+        });
+
+        side.innerHTML = `
+            <div class="inventory-subtitle">Transfer</div>
+            <div class="inventory-helper">${gameState.itemTransfer ? 'Holding ' + gameState.itemTransfer.item : 'No item selected'}</div>
+        `;
+        return;
+    }
+
+    if (gameState.inventoryTab === 'drones') {
+        body.innerHTML = `
+            <div id="drones-ui">
+                <div id="drone-add-state">${gameState.droneMode ? 'Select an item from the inventory to assign as a drone.' : 'No drone assignment active.'}</div>
+                <button class="small-button" id="add-drone-button">+ add drone</button>
+                ${gameState.droneMode ? '<button class="small-button" id="cancel-drone-button">Cancel</button>' : ''}
+            </div>
+        `;
+
+        document.getElementById('add-drone-button').addEventListener('click', () => {
+            gameState.inventoryTab = 'inventory';
+            gameState.droneMode = true;
+            gameState.itemTransfer = null;
+            renderInventoryUI();
+        });
+
+        if (gameState.droneMode) {
+            document.getElementById('cancel-drone-button').addEventListener('click', () => {
+                gameState.droneMode = false;
+                renderInventoryUI();
+            });
+        }
+
+        side.innerHTML = `
+            <div class="inventory-subtitle">Drones</div>
+            <div class="inventory-helper">Press + add drone, then choose a drone item from your inventory.</div>
+        `;
+        return;
+    }
+
+    if (gameState.inventoryTab === 'equipment') {
+        body.innerHTML = `
+            <div id="equipment-ui">
+                <div class="equip-column">
+                    <div class="equip-slot helmet"></div>
+                    <div class="equip-slot breastplate"></div>
+                    <div class="equip-slot pants"></div>
+                    <div class="equip-slot boots"></div>
+                </div>
+                <div class="equip-column">
+                    <div class="equip-slot glove"></div>
+                </div>
+                <div class="equip-column">
+                    <div class="equip-slot chip"></div>
+                </div>
+            </div>
+        `;
+
+        side.innerHTML = `
+            <div class="inventory-subtitle">Equipment</div>
+            <div class="inventory-helper">Helmet, armor, boots, glove, and chip slots are shown here.</div>
+        `;
+        return;
+    }
+
+    if (gameState.inventoryTab === 'databank') {
+        body.innerHTML = `
+            <div class="inventory-subtitle">Databank</div>
+            <div id="databank-list"></div>
+            <div id="databank-preview">Select an entry to view it.</div>
+        `;
+
+        const list = document.getElementById('databank-list');
+        const preview = document.getElementById('databank-preview');
+        gameState.databankEntries.forEach(entry => {
+            const item = document.createElement('div');
+            item.className = 'databank-entry';
+            if (entry.unlocked) item.classList.add('unlocked');
+            if (entry.id === gameState.selectedDatabankEntry) item.classList.add('selected');
+            item.textContent = entry.name;
+            item.addEventListener('click', () => {
+                if (!entry.unlocked) return;
+                gameState.selectedDatabankEntry = entry.id;
+                renderInventoryUI();
+            });
+            list.appendChild(item);
+        });
+
+        if (gameState.selectedDatabankEntry) {
+            const entry = gameState.databankEntries.find(e => e.id === gameState.selectedDatabankEntry);
+            preview.textContent = entry ? `${entry.name} entry details go here.` : 'Select an entry.';
+        }
+
+        side.innerHTML = `
+            <div class="inventory-subtitle">Databank</div>
+            <div class="inventory-helper">Unlocked blueprints appear here. Click one to view a blank entry.</div>
+        `;
+        return;
+    }
+}
+
+function createInventorySlot(item, index, source) {
+    const slot = document.createElement('div');
+    slot.className = 'inventory-slot';
+    if (!item) slot.classList.add('empty');
+    if (gameState.itemTransfer && gameState.itemTransfer.source === source && gameState.itemTransfer.index === index) {
+        slot.classList.add('selected');
+    }
+    slot.dataset.source = source;
+    slot.dataset.index = index;
+    slot.addEventListener('click', () => {
+        inventorySlotClick(source, index);
+    });
+
+    if (item) {
+        const icon = document.createElement('div');
+        icon.className = `item-icon ${item}`;
+        slot.appendChild(icon);
+    }
+
+    return slot;
+}
+
+function inventorySlotClick(source, index) {
+    const sourceArr = source === 'hotbar' ? gameState.hotbar : gameState.inventory;
+    const item = sourceArr[index];
+
+    if (gameState.droneMode) {
+        if (!item) return;
+        if (item !== 'drone') {
+            showNotification('Not a drone');
+            return;
+        }
+        showNotification('Drone assigned');
+        gameState.droneMode = false;
+        renderInventoryUI();
+        return;
+    }
+
+    if (!gameState.itemTransfer) {
+        if (!item) return;
+        gameState.itemTransfer = { source, index, item };
+        renderInventoryUI();
+        return;
+    }
+
+    const fromArr = gameState.itemTransfer.source === 'hotbar' ? gameState.hotbar : gameState.inventory;
+    if (gameState.itemTransfer.source === source && gameState.itemTransfer.index === index) {
+        gameState.itemTransfer = null;
+        renderInventoryUI();
+        return;
+    }
+
+    const targetArr = sourceArr;
+    if (!targetArr[index]) {
+        targetArr[index] = gameState.itemTransfer.item;
+        fromArr[gameState.itemTransfer.index] = null;
+    } else {
+        const temp = targetArr[index];
+        targetArr[index] = gameState.itemTransfer.item;
+        fromArr[gameState.itemTransfer.index] = temp;
+    }
+
+    gameState.itemTransfer = null;
+    updateHeldItemFromHotbar();
+    renderInventoryUI();
+}
+
+function unlockDatabankEntry(id) {
+    const entry = gameState.databankEntries.find(e => e.id === id);
+    if (!entry || entry.unlocked) return;
+    entry.unlocked = true;
+    showDatabankNotice(entry.name);
+    if (!gameState.selectedDatabankEntry) {
+        gameState.selectedDatabankEntry = id;
+    }
+}
+
+function showDatabankNotice(name) {
+    const notice = document.getElementById('databank-notice');
+    notice.textContent = `New databank entry unlocked: ${name}`;
+    notice.classList.add('show');
+    setTimeout(() => {
+        notice.classList.remove('show');
+    }, 2600);
+}
+
+function updateHeldItemFromHotbar() {
+    gameState.heldItem = gameState.hotbar[gameState.selectedSlot];
+
+    const slots = document.querySelectorAll('#hotbar .slot');
+    slots.forEach((slot, i) => {
+        slot.classList.toggle('selected', i === gameState.selectedSlot);
+
+        const item = gameState.hotbar[i];
+
+        if (item === 'scanner') {
+            slot.innerHTML = '<div class="mini scanner"></div>';
+        } 
+        else if (item === 'powerGenerator') {
+            slot.innerHTML = '<div class="mini generator"></div>';
+        }
+        else if (item === 'creature') {
+            slot.innerHTML = '<div class="mini creature"></div>';
+        }
+        else if (item === 'food') {
+            slot.innerHTML = '<div class="mini food"></div>';
+        }
+        else if (item === 'water') {
+            slot.innerHTML = '<div class="mini water"></div>';
+        }
+        else {
+            slot.innerHTML = '';
+        }
+
+
+    // remove old counter
+    const old = slot.querySelector('.count');
+    if (old) old.remove();
+
+    // count items
+    const count = gameState.hotbar.filter(x => x === item).length;
+
+    if (item && count > 1) {
+        const c = document.createElement('div');
+        c.className = 'count';
+        c.textContent = count;
+
+        c.style.position = 'absolute';
+        c.style.bottom = '2px';
+        c.style.right = '4px';
+        c.style.fontSize = '12px';
+        c.style.color = '#00ffff';
+
+        slot.appendChild(c);
+    }
+});
+
+    if (gameState.uiMode === 'inventory') {
+        renderInventoryUI();
+    }
 }
 
 function enterUIMode(mode) {
@@ -895,8 +1808,57 @@ function tryPickupCreature() {
     if (addItemToHotbar('creature')) {
         scene.remove(c);
         creatures.splice(creatures.indexOf(c), 1);
-        showNotification('Creature collected');
+        gameState.foodBlueprintUnlocked = true;
+        gameState.waterBlueprintUnlocked = true;
+        unlockDatabankEntry('digitalCrab');
+        unlockDatabankEntry('food');
+        unlockDatabankEntry('water');
+        showBlueprintHUD('Blueprints Unlocked: Food & Water');
+        showNotification('Creature Sample Acquired');
     }
+}
+
+function tryPickupPowerGenerator() {
+    if (!powerGenerator || !powerGenerator.userData.pickable) return false;
+
+    raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
+    const hits = raycaster.intersectObject(powerGenerator, true);
+    if (!hits.length) return false;
+
+    const dist = player.position.distanceTo(powerGenerator.position);
+    if (dist > 3) {
+        showNotification('Too far to pick up');
+        return false;
+    }
+
+    if (!addItemToHotbar('powerGenerator')) {
+        return false;
+    }
+
+    powerGenerator.visible = false;
+    powerGenerator.userData.pickable = false;
+    const pgIndex = collisionMeshes.indexOf(powerGenerator);
+    if (pgIndex > -1) collisionMeshes.splice(pgIndex, 1);
+    showNotification('Power Generator picked up');
+    return true;
+}
+
+function consumeHeldItem() {
+    if (!gameState.heldItem) return false;
+    if (gameState.heldItem !== 'food' && gameState.heldItem !== 'water') return false;
+
+    const slot = gameState.selectedSlot;
+    if (gameState.heldItem === 'food') {
+        gameState.hunger = Math.min(100, gameState.hunger + 40);
+        showNotification('Food consumed');
+    } else if (gameState.heldItem === 'water') {
+        gameState.thirst = Math.min(100, gameState.thirst + 40);
+        showNotification('Water consumed');
+    }
+
+    gameState.hotbar[slot] = null;
+    updateHeldItemFromHotbar();
+    return true;
 }
 
         
@@ -990,10 +1952,11 @@ function tryPickupCreature() {
             powerGenerator.add(edges);
 
             powerGenerator.userData.type = 'powerGenerator';
-powerGenerator.userData.activated = false;
-powerGenerator.userData.innerGlow = innerGlow;
-powerGenerator.userData.pickable = true;
-
+            powerGenerator.userData.activated = false;
+            powerGenerator.userData.innerGlow = innerGlow;
+            powerGenerator.userData.pickable = true;
+            
+            collisionMeshes.push(powerGenerator);
 
             scene.add(powerGenerator);
         }
@@ -1013,18 +1976,18 @@ function addItemToHotbar(item) {
             portal = new THREE.Group();
             portal.position.set(0, 0.1, -30);
             const socketGeometry = new THREE.CylinderGeometry(0.6, 0.6, 0.2, 16);
-const socketMaterial = new THREE.MeshBasicMaterial({
-    color: 0x00ffff,
-    transparent: true,
-    opacity: 0.3
-});
-const generatorSocket = new THREE.Mesh(socketGeometry, socketMaterial);
-generatorSocket.position.set(0, 0.1, 0);
-portal.add(generatorSocket);
+            const socketMaterial = new THREE.MeshBasicMaterial({
+                color: 0x00ffff,
+                transparent: true,
+                opacity: 0.3
+            });
+            const generatorSocket = new THREE.Mesh(socketGeometry, socketMaterial);
+            generatorSocket.position.set(0, 0.1, 0);
+            portal.add(generatorSocket);
 
-portal.userData.socket = generatorSocket;
-portal.userData.generatorInserted = false;
-generatorSocket.userData.type = 'generatorSocket';
+            portal.userData.socket = generatorSocket;
+            portal.userData.generatorInserted = false;
+            generatorSocket.userData.type = 'generatorSocket';
 
             // Hexagonal outline (dormant)
             const hexShape = new THREE.Shape();
@@ -1059,11 +2022,98 @@ generatorSocket.userData.type = 'generatorSocket';
             hexOutline.position.y = 0.05;
             portal.add(hexOutline);
 
+            // Add ruined pillars and broken roof for the portal area
+            const ruinMaterial = new THREE.MeshStandardMaterial({
+                color: 0x003344,
+                emissive: 0x00ffff,
+                emissiveIntensity: 0.18,
+                roughness: 0.35,
+                metalness: 0.6,
+                transparent: true,
+                opacity: 0.9
+            });
+            const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x00ffff });
+
+            const ruinPositions = [
+                { x: 3.5, z: 3.5, height: 3.5, broken: false },
+                { x: -3.5, z: 3.5, height: 3.8, broken: true },
+                { x: 3.5, z: -3.5, height: 3.2, broken: true },
+                { x: -3.5, z: -3.5, height: 3.6, broken: false }
+            ];
+
+            ruinPositions.forEach((pos, index) => {
+                const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.6, pos.height, 0.6), ruinMaterial);
+                pillar.position.set(pos.x, pos.height / 2, pos.z);
+                if (pos.broken) {
+                    pillar.rotation.z = (index % 2 === 0 ? 1 : -1) * 0.35;
+                    pillar.position.y = pos.height / 2 - 0.5;
+                }
+                portal.add(pillar);
+                collisionMeshes.push(pillar);
+                    // Don't add broken pillars to collision - too small to block
+                    
+                if (pos.broken) {
+                    const fallen = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.2, 1.8), ruinMaterial);
+                    fallen.position.set(pos.x + (pos.x > 0 ? 1.7 : -1.7), 0.3, pos.z + (pos.z > 0 ? 1.7 : -1.7));
+                    fallen.rotation.y = Math.PI / 4;
+                    fallen.rotation.z = (index % 2 === 0 ? 0.7 : -0.7);
+                    portal.add(fallen);
+                    // Don't add fallen debris to collision - jumpable
+
+                    const fallenEdges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(0.8, 0.2, 1.8)), edgeMaterial);
+                    fallenEdges.position.copy(fallen.position);
+                    fallenEdges.rotation.copy(fallen.rotation);
+                    portal.add(fallenEdges);
+                }
+            });
+
+            const roofMaterial = new THREE.MeshStandardMaterial({
+                color: 0x002233,
+                emissive: 0x00ffff,
+                emissiveIntensity: 0.12,
+                roughness: 0.4,
+                metalness: 0.7,
+                transparent: true,
+                opacity: 0.85
+            });
+
+            const roofBeam1 = new THREE.Mesh(new THREE.BoxGeometry(7.5, 0.2, 0.7), roofMaterial);
+            roofBeam1.position.set(0, 3.8, 0);
+            roofBeam1.rotation.y = Math.PI / 8;
+            portal.add(roofBeam1);
+            collisionMeshes.push(roofBeam1);
+            portal.add(new THREE.LineSegments(new THREE.EdgesGeometry(roofBeam1.geometry), edgeMaterial));
+
+            const roofBeam2 = new THREE.Mesh(new THREE.BoxGeometry(7.5, 0.2, 0.7), roofMaterial);
+            roofBeam2.position.set(0, 3.4, 0);
+            roofBeam2.rotation.y = -Math.PI / 9;
+            portal.add(roofBeam2);
+            collisionMeshes.push(roofBeam2);
+            portal.add(new THREE.LineSegments(new THREE.EdgesGeometry(roofBeam2.geometry), edgeMaterial));
+
+            const debrisPositions = [
+                { x: 2.8, z: 0.8, r: -0.5 },
+                { x: -2.5, z: -0.8, r: 0.4 },
+                { x: 1.2, z: -2.8, r: 0.9 },
+                { x: -1.5, z: 2.5, r: -1.1 }
+            ];
+
+            debrisPositions.forEach(piece => {
+                const debris = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.15, 0.9), ruinMaterial);
+                debris.position.set(piece.x, 0.2, piece.z);
+                debris.rotation.y = piece.r;
+                debris.rotation.x = 0.14;
+                portal.add(debris);
+                // Debris is small and jumpable - don't add to collision
+                portal.add(new THREE.LineSegments(new THREE.EdgesGeometry(debris.geometry), edgeMaterial));
+            });
+
             portal.userData = {
                 type: 'portal',
                 active: false,
                 hexMesh: hexMesh,
-                hexOutline: hexOutline
+                hexOutline: hexOutline,
+                socket: generatorSocket
             };
 
             scene.add(portal);
@@ -1169,6 +2219,37 @@ generatorSocket.userData.type = 'generatorSocket';
            
             // Keyboard
             document.addEventListener('keydown', (e) => {
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    toggleInventory();
+                    return;
+                }
+
+                // ESC pause menu
+if (e.key === 'Escape') {
+
+    const pauseMenu = document.getElementById('pause-menu');
+
+    if (pauseMenu.classList.contains('visible')) {
+
+        pauseMenu.classList.remove('visible');
+
+        gameState.uiMode = 'game';
+
+        document.body.requestPointerLock();
+
+    } else {
+
+        pauseMenu.classList.add('visible');
+
+        gameState.uiMode = 'pause';
+
+        document.exitPointerLock();
+    }
+
+    return;
+}
+
                 gameState.keys[e.key.toLowerCase()] = true;
                 // Hotbar selection (1–9)
 if (e.key >= '1' && e.key <= '9') {
@@ -1176,9 +2257,6 @@ if (e.key >= '1' && e.key <= '9') {
     updateHeldItemFromHotbar();
 }
 
-                if (e.key.toLowerCase() === 'e') {
-                    handleInteraction();
-                }
                 if (e.key === ' ') {
                     if (!gameState.isJumping) {
                         gameState.velocity.y = JUMP_FORCE;
@@ -1205,6 +2283,13 @@ if (e.key >= '1' && e.key <= '9') {
                 camera.updateProjectionMatrix();
                 renderer.setSize(window.innerWidth, window.innerHeight);
             });
+
+            document.getElementById('inventory-close').addEventListener('click', closeInventory);
+    document.getElementById('resume-button').addEventListener('click', closePauseMenu);
+    document.getElementById('options-button').addEventListener('click', () => showNotification('Options not implemented yet'));
+    document.getElementById('save-quit-button').addEventListener('click', returnToTitle);
+    document.getElementById('respawn-button').addEventListener('click', respawnPlayer);
+    document.getElementById('title-button').addEventListener('click', returnToTitle);
         }
     document.addEventListener('mousedown', (e) => {
 
@@ -1220,6 +2305,8 @@ if (e.key >= '1' && e.key <= '9') {
 
     // LEFT CLICK
     if (e.button === 0) {
+        if (consumeHeldItem()) return;
+        if (tryPickupPowerGenerator()) return;
         tryCollectChip();
         tryPickupCreature();
     }
@@ -1227,14 +2314,14 @@ if (e.key >= '1' && e.key <= '9') {
     // RIGHT CLICK
 if (e.button === 2) {
 
-    // CLOSE if already open
-    if (gameState.uiMode === 'fabricator') {
-        exitUIMode();
-        return;
-    }
-
     // OPEN if looking at fabricator
     if (tryToggleFabricator()) return;
+
+    // PLACE POWER GENERATOR if held
+    if (gameState.heldItem === 'powerGenerator') {
+        handleInteraction();
+        return;
+    }
 
         // SCANNER
         if (!gameState.scannerCrafted) {
@@ -1308,6 +2395,8 @@ function tryCollectChip() {
 }
 
 function updateVitals(delta) {
+    if (gameState.uiMode !== 'game') return;
+
     gameState.hunger -= delta * 0.4;
     gameState.thirst -= delta * 0.7;
 
@@ -1319,6 +2408,16 @@ function updateVitals(delta) {
     }
 
     gameState.health = Math.max(0, gameState.health);
+    if (gameState.health <= 0 && !gameState.isDead) {
+        gameState.isDead = true;
+        showDeathScreen();
+    }
+}
+
+function updateStatusBars() {
+    document.getElementById('health-fill').style.height = `${gameState.health}%`;
+    document.getElementById('thirst-fill').style.height = `${gameState.thirst}%`;
+    document.getElementById('hunger-fill').style.height = `${gameState.hunger}%`;
 }
 
 function tryScanCreature() {
@@ -1379,18 +2478,18 @@ camera.getWorldDirection(forward);
 
 const dropPos = player.position.clone().add(forward.multiplyScalar(1.5));
 
-// find ground at that spot
-const groundY = getGroundHeight(dropPos.x, dropPos.z);
-
-// generator is 1.5 tall → half = 0.75
+// spawn above the ground so it falls naturally
 powerGenerator.position.set(
     dropPos.x,
-    groundY + 0.75,
+    player.position.y + 1.2,
     dropPos.z
 );
 
 powerGenerator.visible = true;
 powerGenerator.userData.pickable = true;
+powerGenerator.userData.dropped = true;
+powerGenerator.userData.velocityY = 0;
+if (!collisionMeshes.includes(powerGenerator)) collisionMeshes.push(powerGenerator);
 
 
     gameState.hotbar[gameState.selectedSlot] = null;
@@ -1437,6 +2536,8 @@ if (
         if (addItemToHotbar('powerGenerator')) {
             powerGenerator.visible = false;
             powerGenerator.userData.pickable = false;
+            const pgIndex = collisionMeshes.indexOf(powerGenerator);
+            if (pgIndex > -1) collisionMeshes.splice(pgIndex, 1);
             showNotification('Power Generator added to inventory');
         }
         return;
@@ -1503,6 +2604,7 @@ if (
         );
 
         showNotification('Power Generator Blueprint Unlocked');
+        unlockDatabankEntry('powerGenerator');
     }
 }
 
@@ -1566,13 +2668,13 @@ function enterPortal() {
     // First chip discovery
 if (gameState.chips === 1 && !gameState.scannerUnlocked) {
     showNotification('New Blueprint Discovered: SCANNER');
-
 }
 
 // Unlock scanner after FIRST chip
 if (!gameState.scannerUnlocked) {
     gameState.scannerUnlocked = true;
     showBlueprintHUD('Blueprint Unlocked: Scanner');
+    unlockDatabankEntry('scanner');
 }
 
 
@@ -1598,6 +2700,8 @@ if (!gameState.scannerUnlocked) {
 }
 
         function updatePlayer(delta) {
+            if (gameState.uiMode !== 'game') return;
+
             // Mouse look
             const rotationSpeed = 0.002;
             player.rotation.y -= gameState.mouseMovement.x * rotationSpeed;
@@ -1619,9 +2723,28 @@ if (!gameState.scannerUnlocked) {
                 const isSneaking = gameState.keys['shift'];
 
 const speed = MOVE_SPEED * (isSneaking ? SNEAK_MULTIPLIER : 1);
+const newX = player.position.x + moveVector.x * speed * delta;
+const newZ = player.position.z + moveVector.z * speed * delta;
 
-player.position.x += moveVector.x * speed * delta;
-player.position.z += moveVector.z * speed * delta;
+const canMoveX = !checkCollision(
+    newX,
+    player.position.y,
+    player.position.z
+);
+
+const canMoveZ = !checkCollision(
+    player.position.x,
+    player.position.y,
+    newZ
+);
+
+if (canMoveX) {
+    player.position.x = newX;
+}
+
+if (canMoveZ) {
+    player.position.z = newZ;
+}
 
 // Camera height adjust
 camera.position.y = PLAYER_HEIGHT - (isSneaking ? SNEAK_CAMERA_OFFSET : 0);
@@ -1652,20 +2775,134 @@ camera.position.y = PLAYER_HEIGHT - (isSneaking ? SNEAK_CAMERA_OFFSET : 0);
             }
         }
 
-        function getGroundHeight(x, z) {
-            let maxY = 0;
-            platforms.forEach(platform => {
-                const mesh = platform.mesh;
-                const halfWidth = mesh.geometry.parameters.width / 2;
-                const halfDepth = mesh.geometry.parameters.depth / 2;
-                
-                if (x >= mesh.position.x - halfWidth && x <= mesh.position.x + halfWidth &&
-                    z >= mesh.position.z - halfDepth && z <= mesh.position.z + halfDepth) {
-                    maxY = Math.max(maxY, mesh.position.y + 0.15);
-                }
-            });
-            return maxY;
+       function getGroundHeight(x, z) {
+
+    let maxY = 0;
+
+    // Platforms
+    platforms.forEach(platform => {
+
+        const mesh = platform.mesh;
+
+        const halfWidth =
+            mesh.geometry.parameters.width / 2;
+
+        const halfDepth =
+            mesh.geometry.parameters.depth / 2;
+
+        if (
+            x >= mesh.position.x - halfWidth &&
+            x <= mesh.position.x + halfWidth &&
+            z >= mesh.position.z - halfDepth &&
+            z <= mesh.position.z + halfDepth
+        ) {
+
+            maxY = Math.max(
+                maxY,
+                mesh.position.y + 0.15
+            );
         }
+    });
+
+    // Collision objects
+    collisionMeshes.forEach(mesh => {
+
+        if (!mesh || !mesh.geometry) return;
+
+        const pos = new THREE.Vector3();
+        mesh.getWorldPosition(pos);
+
+        const scale = new THREE.Vector3();
+        mesh.getWorldScale(scale);
+
+        const width =
+            (mesh.geometry.parameters.width || 1) * scale.x;
+
+        const depth =
+            (mesh.geometry.parameters.depth || 1) * scale.z;
+
+        const height =
+            (mesh.geometry.parameters.height || 1) * scale.y;
+
+        const halfW = width / 2;
+        const halfD = depth / 2;
+
+        const inside =
+            x >= pos.x - halfW &&
+            x <= pos.x + halfW &&
+            z >= pos.z - halfD &&
+            z <= pos.z + halfD;
+
+        if (!inside) return;
+
+        const top = pos.y + height / 2;
+
+        // only allow standing if near top
+        if (player.position.y >= top - 1.2) {
+            maxY = Math.max(maxY, top);
+        }
+    });
+
+    return maxY;
+}
+function checkCollision(x, y, z) {
+
+    const PLAYER_RADIUS = 0.3;
+    const PLAYER_HEIGHT_COLLISION = 1.7;
+    const STEP_HEIGHT = 0.45;
+
+    for (const mesh of collisionMeshes) {
+
+        if (!mesh || !mesh.geometry) continue;
+
+        const pos = new THREE.Vector3();
+        mesh.getWorldPosition(pos);
+
+        const scale = new THREE.Vector3();
+        mesh.getWorldScale(scale);
+
+        const width =
+            (mesh.geometry.parameters.width || 1) * scale.x;
+
+        const depth =
+            (mesh.geometry.parameters.depth || 1) * scale.z;
+
+        const height =
+            (mesh.geometry.parameters.height || 1) * scale.y;
+
+        // Ignore tiny objects
+        if (height <= STEP_HEIGHT) continue;
+
+        const halfW = width / 2;
+        const halfD = depth / 2;
+        const halfH = height / 2;
+
+        const collideX =
+            x + PLAYER_RADIUS > pos.x - halfW &&
+            x - PLAYER_RADIUS < pos.x + halfW;
+
+        const collideZ =
+            z + PLAYER_RADIUS > pos.z - halfD &&
+            z - PLAYER_RADIUS < pos.z + halfD;
+
+        const collideY =
+            y < pos.y + halfH &&
+            y + PLAYER_HEIGHT_COLLISION > pos.y - halfH;
+
+        // Ignore ceilings above player
+        const roofAbove =
+            pos.y - halfH > y + PLAYER_HEIGHT_COLLISION;
+
+        if (roofAbove) continue;
+
+        if (collideX && collideY && collideZ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+        
 
         function updateChips(delta) {
             chips.forEach(chip => {
@@ -1709,6 +2946,22 @@ camera.position.y = PLAYER_HEIGHT - (isSneaking ? SNEAK_CAMERA_OFFSET : 0);
             });
         }
 
+        function updatePowerGenerator(delta) {
+            if (!powerGenerator || !powerGenerator.visible || !powerGenerator.userData.pickable || !powerGenerator.userData.dropped) return;
+
+            powerGenerator.userData.velocityY += GRAVITY * delta;
+            powerGenerator.position.y += powerGenerator.userData.velocityY * delta;
+
+            const groundY = getGroundHeight(powerGenerator.position.x, powerGenerator.position.z);
+            const minY = groundY + 0.75;
+
+            if (powerGenerator.position.y <= minY) {
+                powerGenerator.position.y = minY;
+                powerGenerator.userData.velocityY = 0;
+                powerGenerator.userData.dropped = false;
+            }
+        }
+
         function showNotification(message) {
             const notification = document.getElementById('notification');
             notification.textContent = message;
@@ -1727,52 +2980,6 @@ camera.position.y = PLAYER_HEIGHT - (isSneaking ? SNEAK_CAMERA_OFFSET : 0);
     }, 2000);
 }
 
-    function updateHeldItemFromHotbar() {
-    gameState.heldItem = gameState.hotbar[gameState.selectedSlot];
-
-    const slots = document.querySelectorAll('#hotbar .slot');
-    slots.forEach((slot, i) => {
-    slot.classList.toggle('selected', i === gameState.selectedSlot);
-
-    const item = gameState.hotbar[i];
-
-    if (item === 'scanner') {
-    slot.innerHTML = '<div class="mini scanner"></div>';
-} 
-else if (item === 'powerGenerator') {
-    slot.innerHTML = '<div class="mini generator"></div>';
-}
-else if (item === 'creature') {
-    slot.innerHTML = '<div class="mini creature"></div>';
-}
-else {
-    slot.innerHTML = '';
-}
-
-
-    // remove old counter
-    const old = slot.querySelector('.count');
-    if (old) old.remove();
-
-    // count items
-    const count = gameState.hotbar.filter(x => x === item).length;
-
-    if (item && count > 1) {
-        const c = document.createElement('div');
-        c.className = 'count';
-        c.textContent = count;
-
-        c.style.position = 'absolute';
-        c.style.bottom = '2px';
-        c.style.right = '4px';
-        c.style.fontSize = '12px';
-        c.style.color = '#00ffff';
-
-        slot.appendChild(c);
-    }
-});
-}
-
         function animate() {
             
             requestAnimationFrame(animate);
@@ -1783,7 +2990,9 @@ else {
             updateChips(delta);
             updateFragments(delta);
             updateCreatures(delta);
+            updatePowerGenerator(delta);
             updateVitals(delta);
+            updateStatusBars();
 
             checkPortalEntry();
 
