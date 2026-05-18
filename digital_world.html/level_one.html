@@ -34,23 +34,57 @@
             z-index: 100;
         }
         #blueprint-hud {
-    position: fixed;
-    right: -360px;
-    top: 40%;
-    width: 340px;
-    padding: 20px;
-    background: rgba(0, 10, 10, 0.95);
-    border: 3px solid #00ffff;
-    color: #00ffff;
-    font-size: 18px;
-    box-shadow: 0 0 30px rgba(0,255,255,0.5);
-    transition: right 0.5s ease;
-    z-index: 200;
-}
+            position: fixed;
+            top: 15%;
+            left: 50%;
+            transform: translate(-50%, -30px);
+            width: min(340px, 80vw);
+            padding: 18px 24px;
+            background: rgba(0, 10, 10, 0.96);
+            border: 3px solid #00ffff;
+            color: #00ffff;
+            font-size: 18px;
+            text-align: center;
+            border-radius: 18px;
+            box-shadow: 0 0 30px rgba(0,255,255,0.5);
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 200;
+            visibility: hidden;
+        }
 
-#blueprint-hud.show {
-    right: 20px;
-}
+        #blueprint-hud.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, 0);
+        }
+
+        #fragment-popup {
+            position: fixed;
+            top: 110px;
+            right: -320px;
+            width: 260px;
+            padding: 16px 20px;
+            background: #001111;
+            border: 2px solid #00ffff;
+            border-radius: 16px;
+            color: #00ffff;
+            font-size: 16px;
+            text-align: center;
+            box-shadow: 0 0 28px rgba(0, 255, 255, 0.35);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.25s ease, right 0.25s ease;
+            pointer-events: none;
+            z-index: 210;
+        }
+
+        #fragment-popup.show {
+            opacity: 1;
+            visibility: visible;
+            right: 20px;
+        }
 
         #hotbar {
             position: absolute;
@@ -79,7 +113,13 @@
             background: radial-gradient(circle, #00ffff, #001111);
             border-radius: 50%;
         }
-
+        .mini.chip {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #66ccff, #001133);
+    box-shadow: 0 0 10px #66ffff;
+}
         .slot {
              width: 50px;
              height: 50px;
@@ -93,34 +133,9 @@
              box-shadow: 0 0 20px #00ff88;
         }
 
-        .chip-counter {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            padding: 15px 25px;
-            background: rgba(0, 20, 20, 0.8);
-            border: 2px solid #00ffff;
-            border-radius: 5px;
-            color: #00ff88;
-            font-size: 24px;
-            font-weight: bold;
-            text-shadow: 0 0 10px #00ff88;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
-        }
+    
 
-        .fragment-counter {
-            position: absolute;
-            top: 80px;
-            right: 20px;
-            padding: 12px 20px;
-            background: rgba(0, 20, 20, 0.8);
-            border: 2px solid #00ffff;
-            border-radius: 5px;
-            color: #00ffff;
-            font-size: 18px;
-            text-shadow: 0 0 10px #00ffff;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
-        }
+
 
         .controls-hint {
             position: absolute;
@@ -451,7 +466,11 @@
             border-radius: 50%;
             box-shadow: inset 0 0 8px #00ff88;
         }
-
+        .item-icon.chip {
+    background: linear-gradient(135deg, #66ccff, #001133);
+    box-shadow: inset 0 0 10px #66ffff;
+    border-radius: 10px;
+}
         .inventory-subtitle {
             font-size: 14px;
             letter-spacing: 0.15em;
@@ -674,13 +693,6 @@
             display: block;
         }
 
-        .status-label {
-            color: #00ffff;
-            font-size: 32px;
-            font-weight: bold;
-            margin-bottom: 30px;
-            text-shadow: 0 0 20px #00ffff;
-        }
 
         #death-screen .status-label {
             color: #ff3333;
@@ -716,58 +728,150 @@
             background: rgba(40, 0, 0, 0.95);
             box-shadow: 0 0 25px rgba(255, 51, 51, 0.6);
         }
+        
+#status-ui {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
 
-        .status-bars {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            display: flex;
-            gap: 15px;
-            z-index: 50;
-        }
+    display: flex;
+    gap: 18px;
 
-        .status-block {
-            position: relative;
-            width: 60px;
-            height: 60px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
+    z-index: 999;
+}
 
-        .status-block .status-label {
-            position: absolute;
-            font-size: 10px;
-            font-weight: bold;
-            color: #00ffff;
-            text-shadow: 0 0 8px #00ffff;
-            bottom: -20px;
-            white-space: nowrap;
-            margin: 0;
-        }
+.status-circle {
+    position: relative;
 
-        .status-bar {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            border-radius: 12px;
-            background: rgba(0, 20, 20, 0.95);
-            border: 2px solid #00ffff;
-            overflow: hidden;
-            display: flex;
-            align-items: flex-end;
-        }
+    width: 72px;
+    height: 72px;
 
-        .status-fill {
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #00ff88, #00ffaa);
-            transition: height 0.2s;
-            box-shadow: inset 0 0 15px rgba(0, 255, 136, 0.6), 0 0 10px rgba(0, 255, 136, 0.4);
-            border-radius: 10px;
-        }
+    border-radius: 50%;
 
+    overflow: visible;
+
+    background: transparent;
+}
+
+.status-fill {
+    position: absolute;
+    inset: 0;
+
+    border-radius: 50%;
+
+    transition: background 0.08s linear;
+
+    /* REMOVE old glow system */
+    filter: none;
+
+    /* thin ring */
+    -webkit-mask:
+        radial-gradient(
+            farthest-side,
+            transparent calc(100% - 8px),
+            white calc(100% - 7px)
+        );
+
+    mask:
+        radial-gradient(
+            farthest-side,
+            transparent calc(100% - 8px),
+            white calc(100% - 7px)
+        );
+}
+.status-center {
+    position: absolute;
+
+    inset: 5px;
+
+    border-radius: 50%;
+
+    background: #000000;
+
+    z-index: 2;
+}
+.status-fill::before {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    border-radius: 50%;
+
+    background: inherit;
+
+    opacity: 1;
+
+    filter:
+        blur(4px)
+        brightness(2.2);
+
+    transform: scale(1.03);
+
+    z-index: -1;
+
+    -webkit-mask:
+        radial-gradient(
+            farthest-side,
+            transparent calc(100% - 8px),
+            white calc(100% - 7px)
+        );
+
+    mask:
+        radial-gradient(
+            farthest-side,
+            transparent calc(100% - 8px),
+            white calc(100% - 7px)
+        );
+}
+
+
+.status-text {
+    position: absolute;
+    inset: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: white;
+
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 1px;
+
+    text-shadow:
+        0 0 6px rgba(255,255,255,0.5);
+
+    z-index: 5;
+
+    pointer-events: none;
+}
+
+.low-ring {
+    animation: lowPulse 0.8s infinite alternate;
+}
+
+@keyframes lowPulse {
+    from {
+        transform: scale(1);
+    }
+
+    to {
+        transform: scale(1.06);
+    }
+}
+#health-fill {
+    color: #ff4444;
+}
+
+#hunger-fill {
+    color: #ff6600;
+}
+
+#thirst-fill {
+    color: #00ccff;
+}
     </style>
 </head>
 <body>
@@ -781,16 +885,13 @@
     <!-- HUD -->
     <div class="hud">
         <div class="chip-counter">
-    CHIPS: <span id="chip-count">0</span>
-</div>
-<div id="fabricator-ui">
-    <div id="fabricator-header">FABRICATOR</div>
-    <div id="fabricator-grid"></div>
-</div>
+        CHIPS: <span id="chip-count">0</span>
+    <div id="fabricator-ui">
+        <div id="fabricator-header">FABRICATOR</div>
+        <div id="fabricator-grid"></div>
+    </div>
 
-        <div class="fragment-counter">
-            FRAGMENTS SCANNED: <span id="fragment-count">0</span>/5
-        </div>
+    
         <div id="inventory-ui" class="inventory-ui hidden">
             <button id="inventory-close" class="inventory-close">×</button>
             <div class="inventory-header">
@@ -816,20 +917,32 @@
             <button class="menu-button" id="respawn-button">Respawn</button>
             <button class="menu-button" id="title-button">Title Screen</button>
         </div>
-        <div class="status-bars">
-            <div class="status-block">
-                <div class="status-label">HEALTH</div>
-                <div class="status-bar"><div class="status-fill" id="health-fill"></div></div>
-            </div>
-            <div class="status-block">
-                <div class="status-label">THIRST</div>
-                <div class="status-bar"><div class="status-fill" id="thirst-fill"></div></div>
-            </div>
-            <div class="status-block">
-                <div class="status-label">HUNGER</div>
-                <div class="status-bar"><div class="status-fill" id="hunger-fill"></div></div>
-            </div>
-        </div>
+      <div id="status-ui">
+
+    <div class="status-circle">
+        <div id="health-fill" class="status-fill"></div>
+        <div class="status-center"></div>
+        <div class="status-text">HP</div>
+    </div>
+
+    <div class="status-circle">
+        <div id="hunger-fill" class="status-fill"></div>
+        <div class="status-center"></div>
+        <div class="status-text">FOOD</div>
+    </div>
+
+    <div class="status-circle">
+        <div id="thirst-fill" class="status-fill"></div>
+        <div class="status-center"></div>
+        <div class="status-text">H2O</div>
+    </div>
+
+</div>
+
+</div>
+
+
+
         <div id="hotbar">
     <div class="slot selected"></div>
     <div class="slot"></div>
@@ -847,6 +960,7 @@
         <div class="scanner-indicator" id="scanner-indicator"></div>
         <div class="notification" id="notification"></div>
         <div id="blueprint-hud"></div>
+        <div id="fragment-popup"></div>
         <div class="portal-message" id="portal-message">
             Enter the Portal
         </div>
@@ -898,8 +1012,11 @@
             isFabricatorOpen: false,
             uiMode: 'game', // 'game', 'fabricator', 'inventory'
             health: 100,
+            maxHealth: 100,
             hunger: 100,
+            maxHunger: 100,
             thirst: 100,
+            maxThirst: 100,
         };
 
         // Three.js Setup
@@ -908,6 +1025,16 @@
         let platforms = [], chips = [], fragments = [], creatures = [];
         let powerGenerator, portal, portalParticles = [];
         let collisionMeshes = []; // Track all solid objects
+
+        // Deterministic chunk random based on position + world seed
+        function getChunkRandom(x, z, offsetSeed = 0) {
+            const chunkX = Math.floor(x / 10);  // Match PLATFORM_SPACING
+            const chunkZ = Math.floor(z / 10);  // Match PLATFORM_SPACING
+            const worldSeed = currentWorld?.seed || 0;
+            const combined = chunkX * 73856093 ^ chunkZ * 19349663 ^ (worldSeed + offsetSeed);
+            const frac = Math.sin(combined) * 43758.5453;
+            return frac - Math.floor(frac);
+        }
         let raycaster, mouse;
         let clock = new THREE.Clock();
         let heldItemMesh = null;
@@ -923,10 +1050,14 @@ let savedWorlds =
     JSON.parse(localStorage.getItem('digitalWorlds')) || [];
 
 let currentWorld = savedWorlds[currentWorldIndex];
+        // === GAME CONSTANTS ===
         const GRAVITY = -20;
         const JUMP_FORCE = 8;
         const MOVE_SPEED = 5;
         const PLAYER_HEIGHT = 1.8;
+        const PLAYER_RADIUS = 0.3;
+        const PLAYER_HEIGHT_COLLISION = 1.7;
+        const STEP_HEIGHT = 0.45;
         const PORTAL_TRIGGER_RADIUS = 2.2;
         const SNEAK_MULTIPLIER = 0.4;
         const SNEAK_CAMERA_OFFSET = 0.4;
@@ -976,8 +1107,11 @@ let currentWorld = savedWorlds[currentWorldIndex];
     document.getElementById('chip-count').textContent =
         gameState.chips;
 
-    document.getElementById('fragment-count').textContent =
-        gameState.fragmentsScanned;
+    const fragmentCountEl = document.getElementById('fragment-count');
+    if (fragmentCountEl) {
+        fragmentCountEl.textContent =
+            gameState.fragmentsScanned;
+    }
 }
             // Renderer
             renderer = new THREE.WebGLRenderer({ 
@@ -1001,9 +1135,6 @@ let currentWorld = savedWorlds[currentWorldIndex];
 
             // Create World
             createPlatforms();
-            createChips();       
-            createFragments();    
-            createCreatures();
             createPortal();
             createFabricator();
 
@@ -1171,7 +1302,6 @@ function populateFabricator() {
         tip.textContent = item.cost + ' Chips';
         el.appendChild(tip);
 
-        // 🔥 THIS IS THE Important part
         el.addEventListener('click', item.craft);
 
         grid.appendChild(el);
@@ -1418,10 +1548,35 @@ function createInventorySlot(item, index, source) {
     });
 
     if (item) {
-        const icon = document.createElement('div');
-        icon.className = `item-icon ${item}`;
-        slot.appendChild(icon);
+
+    const icon = document.createElement('div');
+
+    if (item === 'scanner') {
+        icon.className = 'mini scanner';
     }
+
+    else if (item === 'powerGenerator') {
+        icon.className = 'mini generator';
+    }
+
+    else if (item === 'creature') {
+        icon.className = 'mini creature';
+    }
+
+    else if (item === 'food') {
+        icon.className = 'mini food';
+    }
+
+    else if (item === 'water') {
+        icon.className = 'mini water';
+    }
+
+    else if (item === 'chip') {
+        icon.className = 'mini chip';
+    }
+
+    slot.appendChild(icon);
+}
 
     return slot;
 }
@@ -1470,7 +1625,21 @@ function inventorySlotClick(source, index) {
     updateHeldItemFromHotbar();
     renderInventoryUI();
 }
+function addItemToInventory(itemName) {
 
+    const emptyIndex =
+        gameState.inventory.findIndex(i => i === null);
+
+    if (emptyIndex !== -1) {
+        gameState.inventory[emptyIndex] = itemName;
+    } else {
+        showNotification('Inventory Full');
+        return false;
+    }
+
+    renderInventoryUI();
+    return true;
+}
 function unlockDatabankEntry(id) {
     const entry = gameState.databankEntries.find(e => e.id === id);
     if (!entry || entry.unlocked) return;
@@ -1498,7 +1667,7 @@ function updateHeldItemFromHotbar() {
         slot.classList.toggle('selected', i === gameState.selectedSlot);
 
         const item = gameState.hotbar[i];
-
+    
         if (item === 'scanner') {
             slot.innerHTML = '<div class="mini scanner"></div>';
         } 
@@ -1514,6 +1683,9 @@ function updateHeldItemFromHotbar() {
         else if (item === 'water') {
             slot.innerHTML = '<div class="mini water"></div>';
         }
+        else if (item === 'chip') {
+    slot.innerHTML = '<div class="mini chip"></div>';
+}
         else {
             slot.innerHTML = '';
         }
@@ -1630,6 +1802,7 @@ let RENDER_DISTANCE = 3; // adjustable
 
 function createPlatforms() {
     updatePlatformGrid();
+    
 }
 
 function updatePlatformGrid() {
@@ -1659,33 +1832,40 @@ function updatePlatformGrid() {
 
 
 function spawnPlatformContent(x, y, z) {
-    // 30% chance for a chip
-    if (Math.random() < 0.3) {
+    // 30% chance for a chip (deterministic per chunk)
+    if (getChunkRandom(x, z, 100) < 0.3) {
+        const offsetX = getChunkRandom(x + 1, z, 101) - 0.5;
+        const offsetZ = getChunkRandom(x, z + 1, 102) - 0.5;
         createChip(
-            x + (Math.random() - 0.5) * 6,
+            x + offsetX * 6,
             y + 1.5,
-            z + (Math.random() - 0.5) * 6
+            z + offsetZ * 6
         );
     }
 
-    // RARE fragment (controlled)
-    if (fragments.length < gameState.totalFragments && Math.random() < 0.08) {
+    // Fragment spawn (infinite, but rare after scanning 5)
+    const fragmentChance = gameState.fragmentsScanned >= 5 ? 0.05 : 0.25;
+    if (getChunkRandom(x, z, 200) < fragmentChance) {
+        const offsetX = getChunkRandom(x + 3, z, 201) - 0.5;
+        const offsetZ = getChunkRandom(x, z + 3, 202) - 0.5;
         createFragment(
-            x + (Math.random() - 0.5) * 6,
+            x + offsetX * 6,
             y + 1.2,
-            z + (Math.random() - 0.5) * 6,
+            z + offsetZ * 6,
             fragments.length
         );
     }
-    // Creature spawn (rare)
-if (Math.random() < 0.15) {
-    createCreature(
-        x + (Math.random() - 0.5) * 6,
-        y + 0.5,
-        z + (Math.random() - 0.5) * 6
-    );
-}
-
+    
+    // Creature spawn (rare, deterministic)
+    if (getChunkRandom(x, z, 300) < 0.15) {
+        const offsetX = getChunkRandom(x + 6, z, 301) - 0.5;
+        const offsetZ = getChunkRandom(x, z + 6, 302) - 0.5;
+        createCreature(
+            x + offsetX * 6,
+            y + 0.5,
+            z + offsetZ * 6
+        );
+    }
 }
 
             // Builds Platforms
@@ -2467,12 +2647,61 @@ function tryCollectChip() {
 
     collectChip(chip);
 }
+function updateVitalsUI() {
 
+    const healthFill = document.getElementById('health-fill');
+    const hungerFill = document.getElementById('hunger-fill');
+    const thirstFill = document.getElementById('thirst-fill');
+
+    if (!healthFill || !hungerFill || !thirstFill) {
+        console.log('Vitals UI missing');
+        return;
+    }
+
+    const healthPercent =
+        (gameState.health / gameState.maxHealth) * 100;
+
+    const hungerPercent =
+        (gameState.hunger / gameState.maxHunger) * 100;
+
+    const thirstPercent =
+        (gameState.thirst / gameState.maxThirst) * 100;
+
+    console.log(
+        'HP:',
+        healthPercent,
+        'FOOD:',
+        hungerPercent,
+        'H2O:',
+        thirstPercent
+    );
+
+    healthFill.style.background =
+        `conic-gradient(
+            #ff4444 0deg,
+            #ff4444 ${healthPercent * 3.6}deg,
+            rgba(0,0,0,0) ${healthPercent * 3.6}deg, rgba(0,0,0,0) 360deg
+        )`;
+
+    hungerFill.style.background =
+    `conic-gradient(
+        #ff6600 0deg,
+        #ff6600 ${hungerPercent * 3.6}deg,
+        transparent ${hungerPercent * 3.6}deg
+    )`;
+
+    thirstFill.style.background =
+        `conic-gradient(
+            #00ccff 0deg,
+            #00ccff ${thirstPercent * 3.6}deg,
+            rgba(0,0,0,0) ${thirstPercent * 3.6}deg, rgba(0,0,0,0) 360deg
+        )`;
+}
 function updateVitals(delta) {
     if (gameState.uiMode !== 'game') return;
 
-    gameState.hunger -= delta * 0.4;
-    gameState.thirst -= delta * 0.7;
+    gameState.hunger -= delta * 0.7;
+    gameState.thirst -= delta * 1.0;
 
     gameState.hunger = Math.max(0, gameState.hunger);
     gameState.thirst = Math.max(0, gameState.thirst);
@@ -2486,12 +2715,6 @@ function updateVitals(delta) {
         gameState.isDead = true;
         showDeathScreen();
     }
-}
-
-function updateStatusBars() {
-    document.getElementById('health-fill').style.height = `${gameState.health}%`;
-    document.getElementById('thirst-fill').style.height = `${gameState.thirst}%`;
-    document.getElementById('hunger-fill').style.height = `${gameState.hunger}%`;
 }
 
 function tryScanCreature() {
@@ -2650,14 +2873,18 @@ if (
     fragment.material.color.setHex(0x00ff88);
 
     // ===== HUD UPDATE =====
-    document.getElementById('fragment-count').textContent =
-        gameState.fragmentsScanned;
+    const fragmentCountEl = document.getElementById('fragment-count');
+
+if (fragmentCountEl) {
+    fragmentCountEl.textContent = gameState.fragmentsScanned;
+}
 
     showNotification('Fragment Scanned: Data Retrieved');
 
-    showBlueprintHUD(
-        `${gameState.fragmentsScanned}/${gameState.totalFragments} Data Fragments Scanned`
-    );
+    showFragmentPopup(
+    `${gameState.fragmentsScanned}/${gameState.totalFragments} Fragments Scanned`
+);
+
 
     // ===== SCANNER ANIMATION =====
     const scanner = document.getElementById('scanner-indicator');
@@ -2673,9 +2900,11 @@ if (
     ) {
         gameState.generatorBlueprintUnlocked = true;
 
-        showBlueprintHUD(
-            `${gameState.totalFragments}/${gameState.totalFragments} Data Fragments Scanned. Blueprint Unlocked: Power Generator`
-        );
+    showFragmentPopup(
+`${gameState.totalFragments}/${gameState.totalFragments} Fragments Scanned`
+);
+
+showBlueprintHUD('Blueprint Unlocked: Power Generator');
 
         showNotification('Power Generator Blueprint Unlocked');
         unlockDatabankEntry('powerGenerator');
@@ -2712,43 +2941,43 @@ if (
             }, 2000);
         }
 
-        function collectChip(chip) {
+function collectChip(chip) {
+
+    const added = addItemToInventory('chip');
+
+    if (!added) return;
+
+    // IMPORTANT
     gameState.chips++;
 
-    document.getElementById('chip-count').textContent = gameState.chips;
+    // Update chip UI
+    const chipCounter = document.getElementById('chip-count');
+    if (chipCounter) {
+        chipCounter.textContent = gameState.chips;
+    }
 
-    // First chip discovery
-if (gameState.chips === 1 && !gameState.scannerUnlocked) {
-    showNotification('New Blueprint Discovered: SCANNER');
-}
+    // Unlock scanner on first chip
+    if (gameState.chips === 1 && !gameState.scannerUnlocked) {
 
-// Unlock scanner after FIRST chip
-if (!gameState.scannerUnlocked) {
-    gameState.scannerUnlocked = true;
-    showBlueprintHUD('Blueprint Unlocked: Scanner');
-    unlockDatabankEntry('scanner');
-}
+        gameState.scannerUnlocked = true;
 
+        showNotification('New Blueprint Discovered: Scanner');
 
+        showBlueprintHUD('Blueprint Unlocked: Scanner');
 
+        unlockDatabankEntry('scanner');
+    }
 
-    // Chip collection animation
-    const targetPos = player.position.clone();
-    const startPos = chip.position.clone();
-    let progress = 0;
+    // Remove chip
+    scene.remove(chip);
 
-    const collectInterval = setInterval(() => {
-        progress += 0.1;
-        chip.position.lerpVectors(startPos, targetPos, progress);
-        chip.scale.multiplyScalar(0.9);
-        chip.material.opacity *= 0.9;
+    const index = chips.indexOf(chip);
 
-        if (progress >= 1) {
-            clearInterval(collectInterval);
-            scene.remove(chip);
-            chips.splice(chips.indexOf(chip), 1);
-        }
-    }, 16);
+    if (index !== -1) {
+        chips.splice(index, 1);
+    }
+
+    showNotification('Chip Collected');
 }
 
         function updatePlayer(delta) {
@@ -2911,10 +3140,6 @@ if (gameState.portalActive) {
 }
 function checkCollision(x, y, z) {
 
-    const PLAYER_RADIUS = 0.3;
-    const PLAYER_HEIGHT_COLLISION = 1.7;
-    const STEP_HEIGHT = 0.45;
-
     for (const mesh of collisionMeshes) {
 
         if (!mesh || !mesh.geometry) continue;
@@ -2934,7 +3159,7 @@ function checkCollision(x, y, z) {
         const height =
             (mesh.geometry.parameters.height || 1) * scale.y;
 
-        // Ignore tiny objects
+        // Ignore tiny objects like ground debris
         if (height <= STEP_HEIGHT) continue;
 
         const halfW = width / 2;
@@ -2966,7 +3191,6 @@ function checkCollision(x, y, z) {
 
     return false;
 }
-        
 
         function updateChips(delta) {
             chips.forEach(chip => {
@@ -3034,15 +3258,46 @@ function checkCollision(x, y, z) {
                 notification.classList.remove('show');
             }, 3000);
         }
-        function showBlueprintHUD(text) {
-    const hud = document.getElementById('blueprint-hud');
-    hud.textContent = text;
-    hud.classList.add('show');
+        let blueprintHudTimeout = null;
 
-    setTimeout(() => {
-        hud.classList.remove('show');
-    }, 2000);
+        function showBlueprintHUD(text) {
+            const hud = document.getElementById('blueprint-hud');
+            if (!hud) return;
+
+            hud.textContent = text;
+            hud.classList.add('show');
+            hud.style.visibility = 'visible';
+
+            if (blueprintHudTimeout) {
+                clearTimeout(blueprintHudTimeout);
+            }
+            blueprintHudTimeout = setTimeout(() => {
+                hud.classList.remove('show');
+                blueprintHudTimeout = null;
+            }, 2000);
+        }
+
+        let fragmentPopupTimeout = null;
+
+        function showFragmentPopup(text) {
+            const popup = document.getElementById('fragment-popup');
+        if (!popup) {
+    console.error('fragment-popup div missing');
+    return;
 }
+
+            popup.textContent = text;
+            popup.classList.add('show');
+            popup.style.visibility = 'visible';
+
+            if (fragmentPopupTimeout) {
+                clearTimeout(fragmentPopupTimeout);
+            }
+            fragmentPopupTimeout = setTimeout(() => {
+                popup.classList.remove('show');
+                fragmentPopupTimeout = null;
+            }, 2200);
+        }
 
         function animate() {
             
@@ -3056,8 +3311,7 @@ function checkCollision(x, y, z) {
             updateCreatures(delta);
             updatePowerGenerator(delta);
             updateVitals(delta);
-            updateStatusBars();
-
+            updateVitalsUI();
             checkPortalEntry();
 
             if (gameState.portalActive) {
